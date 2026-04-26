@@ -1,0 +1,43 @@
+{
+	"name": "@vinhnhq/dev-workflow",
+	"version": "0.1.0",
+	"description": "Opinionated dev workflow scaffolder — spec → plan → implement → test → review → release. Three-bucket sprint planning, PR-based releases, optional stack presets.",
+	"type": "module",
+	"bin": {
+		"dev-workflow": "./bin.mjs"
+	},
+	"files": [
+		"bin.mjs",
+		"src",
+		"templates",
+		"README.md",
+		"LICENSE"
+	],
+	"scripts": {
+		"test": "node --test tests/",
+		"lint": "echo 'no lint configured yet'"
+	},
+	"keywords": [
+		"workflow",
+		"scaffolder",
+		"sprint",
+		"release",
+		"cli"
+	],
+	"author": "vinhnhq",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/vinhnhq/dev-workflow.git"
+	},
+	"bugs": {
+		"url": "https://github.com/vinhnhq/dev-workflow/issues"
+	},
+	"homepage": "https://github.com/vinhnhq/dev-workflow#readme",
+	"engines": {
+		"node": ">=20"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}
