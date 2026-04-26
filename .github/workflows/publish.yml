@@ -18,7 +18,7 @@ jobs:
           node-version: 20
           registry-url: "https://registry.npmjs.org"
       - name: Run tests
-        run: node --test tests/
+        run: npm test
       - name: Publish
         run: npm publish --access public --provenance
         env:
