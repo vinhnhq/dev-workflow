@@ -1,6 +1,6 @@
 {
 	"name": "@vinhnnn/dev-workflow",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"description": "Opinionated dev workflow scaffolder — spec → plan → implement → test → review → release. Three-bucket sprint planning, PR-based releases, optional stack presets.",
 	"type": "module",
 	"bin": {
