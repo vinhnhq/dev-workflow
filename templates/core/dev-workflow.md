@@ -474,13 +474,91 @@ Document each known failure with a comment in the test file explaining why it is
 ## Phase 5 — Review (Knowledge Capture)
 
 **Entry:** Sprint tasks are done and tests pass.  
-**Exit:** Docs updated, ADRs finalized, ownership recorded.
+**Exit:** Docs updated, ADRs finalized, ownership recorded, sprint retro written.
 
 ### What to update
 
 1. **`docs/<domain>.md`** — update with any patterns, gotchas, or critical rules discovered during the sprint
 2. **`docs/decisions/`** — finalize any ADRs drafted during planning
 3. **`docs/knowledge-ownership.md`** — record who drove what
+4. **`docs/learnings.md`** — append continuous-improvement journal entries (see below)
+5. **`tasks/sprint-NN-name/retro.md`** — write the sprint-end retrospective (see below)
+
+### Two reflective artifacts, two cadences
+
+| File | Cadence | Format | Purpose |
+|------|---------|--------|---------|
+| `docs/learnings.md` | Continuous — write the moment a surprise happens | Append-only, dated, 1-3 sentences + **Promote?** verdict | Buffer for surprises that haven't earned a permanent home yet |
+| `tasks/sprint-NN-name/retro.md` | Punctuated — once per sprint, after the release ships | Structured: what worked, what didn't, conventions changed/added, carried over | Sprint-end synthesis — what we'll do differently next time |
+
+These are different artifacts. `learnings.md` is granular and noisy; `retro.md` is the structured synthesis at sprint exit. They feed each other — sprint-end retro often pulls from the learnings entries accumulated mid-sprint.
+
+### `learnings.md` format
+
+```markdown
+# Learnings — append on the fly
+
+## YYYY-MM-DD · <short, specific title>
+
+<1-3 sentences: what happened, what you learned. Concrete, not abstract.>
+
+**Promote?** <yes / no / later> — <where it should go: ADR, dev-workflow.md, CLAUDE.md, code, or "drop">
+```
+
+**Promotion rules** (apply at the start of every sprint):
+
+| If an entry is | Action |
+|----------------|--------|
+| Marked **Promote? yes** + target exists | Apply it; mark entry **✓ promoted** with link |
+| Marked **Promote? yes** but no target yet | Open ADR or doc draft; link from the entry |
+| Marked **Promote? no** + >90 days old | Delete |
+| Same lesson recurs 3+ times | Force promote — convention is missing |
+| Marked **Promote? later** + no movement after 3 sprints | Delete by default |
+
+The file is a buffer, not a destination. Without these rules it becomes a graveyard — same default-delete discipline `backlog/ideas.md` uses.
+
+### `retro.md` format
+
+One per sprint, lives inside the sprint folder:
+
+```markdown
+# Retro — Sprint NN: <Name>
+
+**Released:** vX.Y.Z on YYYY-MM-DD
+**Duration:** <e.g., 2 weeks, half a day>
+
+## What we shipped
+<bullet list of Committed tasks ✓ done, plus any Stretch/Blocked status>
+
+## What worked
+<2-4 bullets, concrete, name the wins>
+
+## What didn't
+<2-4 bullets, concrete, name the misses without blame>
+
+## Conventions changed
+<bullet list of changes to existing rules — new excludes, new gates, etc>
+
+## Conventions added
+<bullet list of new rules introduced — new commit scopes, new file types, etc>
+
+## Carried over to next sprint
+<bullet list of unfinished or blocked work that rolls forward>
+```
+
+Keep both files honest. The misses section is more valuable than the wins section — wins repeat themselves; misses are the input to next sprint's plan.
+
+### `knowledge-ownership.md` format
+
+```markdown
+# Knowledge Ownership
+
+| Sprint | Task | Solution | Owner | Notes |
+|--------|------|----------|-------|-------|
+| 04 | ViewTransition animations | CSS class toggle | collab | Tried native ViewTransition first — not ready |
+
+Owner values: `you` (developer), `AI` (agent), `collab` (iterated together)
+```
 
 ### `knowledge-ownership.md` format
 
