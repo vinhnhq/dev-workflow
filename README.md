@@ -1,4 +1,4 @@
-# `@vinhnhq/dev-workflow`
+# `@vinhnnn/dev-workflow`
 
 Opinionated dev workflow scaffolder for solo and small-team projects. Three-bucket sprint planning, PR-based releases, optional stack presets.
 
@@ -8,14 +8,14 @@ Opinionated dev workflow scaffolder for solo and small-team projects. Three-buck
 
 ```bash
 # In any project root
-bunx @vinhnhq/dev-workflow init                    # core only
-bunx @vinhnhq/dev-workflow init --preset nextjs    # core + Next.js preset
+bunx @vinhnnn/dev-workflow init                    # core only
+bunx @vinhnnn/dev-workflow init --preset nextjs    # core + Next.js preset
 
 # Later, when you ship a workflow improvement
-bunx @vinhnhq/dev-workflow upgrade
+bunx @vinhnnn/dev-workflow upgrade
 
 # Add a preset to a project that's already init'd
-bunx @vinhnhq/dev-workflow add-preset nextjs
+bunx @vinhnnn/dev-workflow add-preset nextjs
 ```
 
 ## What it scaffolds

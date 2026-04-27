@@ -1,5 +1,5 @@
 {
-	"name": "@vinhnhq/dev-workflow",
+	"name": "@vinhnnn/dev-workflow",
 	"version": "0.1.0",
 	"description": "Opinionated dev workflow scaffolder — spec → plan → implement → test → review → release. Three-bucket sprint planning, PR-based releases, optional stack presets.",
 	"type": "module",
@@ -24,7 +24,7 @@
 		"release",
 		"cli"
 	],
-	"author": "vinhnhq",
+	"author": "vinhnnn",
 	"license": "MIT",
 	"repository": {
 		"type": "git",

@@ -1,10 +1,10 @@
-# Plan: `@vinhnhq/dev-workflow` v1.0.0
+# Plan: `@vinhnnn/dev-workflow` v1.0.0
 
 This file is the brief for the **next Claude Code session**, opened with cwd = `/Users/vinhn/github.com/dev-workflow/`. Read this top-to-bottom, then start at T01.
 
 ## Context
 
-Context lives in another repo's history (`/Users/vinhn/github.com/tkp/`), where this workflow was field-tested across two real releases (v0.2.0 SEO foundation, v0.3.0 team-mode hardening). The conventions are battle-tested; this repo packages them so any new project can install via `bunx @vinhnhq/dev-workflow init` instead of manually copy-pasting files.
+Context lives in another repo's history (`/Users/vinhn/github.com/tkp/`), where this workflow was field-tested across two real releases (v0.2.0 SEO foundation, v0.3.0 team-mode hardening). The conventions are battle-tested; this repo packages them so any new project can install via `bunx @vinhnnn/dev-workflow init` instead of manually copy-pasting files.
 
 The actual workflow conventions are already in `templates/core/dev-workflow.md` and `templates/nextjs/dev-workflow-nextjs.md` — copied verbatim from the source repo. **Don't rewrite them; they are the source of truth.** The work in this repo is the CLI that delivers them.
 
@@ -12,7 +12,7 @@ The actual workflow conventions are already in `templates/core/dev-workflow.md` 
 
 | Decision | Value | Why |
 |----------|-------|-----|
-| Package name | `@vinhnhq/dev-workflow` | Scoped, clear ownership, no name collision |
+| Package name | `@vinhnnn/dev-workflow` | Scoped under existing npm user `vinhnnn` (the @vinhnhq scope is owned by another npm user) |
 | License | MIT | Least friction for adopters |
 | Visibility | Public on GitHub | Required for `bunx` install path without auth |
 | Initial version | `0.1.0` (pre-release) → `1.0.0` once CLI works | Field-tested elsewhere, but this repo's CLI is unproven |
@@ -84,7 +84,7 @@ If any of those fail, fix before T02.
 cd /Users/vinhn/github.com/dev-workflow
 git init -b dev
 git add .
-git commit -m "chore: scaffold @vinhnhq/dev-workflow v0.1.0"
+git commit -m "chore: scaffold @vinhnnn/dev-workflow v0.1.0"
 gh repo create vinhnhq/dev-workflow --public --source=. --description "Opinionated dev workflow scaffolder"
 git push -u origin dev
 git checkout -b main && git push -u origin main && git checkout dev
@@ -184,13 +184,13 @@ git push --tags
 # publish.yml fires, npm publish happens automatically
 ```
 
-**Acceptance:** `bunx @vinhnhq/dev-workflow@1.0.0 --version` prints `1.0.0` from anywhere.
+**Acceptance:** `bunx @vinhnnn/dev-workflow@1.0.0 --version` prints `1.0.0` from anywhere.
 
 ### T09 — Smoke test from a fresh repo
 
 ```bash
 mkdir /tmp/test-project && cd /tmp/test-project
-bunx @vinhnhq/dev-workflow@latest init --preset nextjs
+bunx @vinhnnn/dev-workflow@latest init --preset nextjs
 ls dev-workflow.md dev-workflow-nextjs.md scripts/release-check.sh
 ```
 
@@ -201,7 +201,7 @@ ls dev-workflow.md dev-workflow-nextjs.md scripts/release-check.sh
 In `~/github.com/tkp/`, run:
 
 ```bash
-bunx @vinhnhq/dev-workflow upgrade
+bunx @vinhnnn/dev-workflow upgrade
 ```
 
 Should report "no changes — local matches templates" since the templates were copied from TKP. If there are diffs, that's a real signal of drift between the two — investigate before applying.

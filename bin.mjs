@@ -25,9 +25,9 @@ Flags:
   --yes               Apply all upgrades without prompting (upgrade only)
 
 Examples:
-  bunx @vinhnhq/dev-workflow init --preset nextjs
-  bunx @vinhnhq/dev-workflow upgrade
-  bunx @vinhnhq/dev-workflow add-preset nextjs
+  bunx @vinhnnn/dev-workflow init --preset nextjs
+  bunx @vinhnnn/dev-workflow upgrade
+  bunx @vinhnnn/dev-workflow add-preset nextjs
 `;
 
 async function main(argv) {
