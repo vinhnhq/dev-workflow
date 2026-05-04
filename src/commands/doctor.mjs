@@ -6,10 +6,10 @@
 // Zero npm deps.
 
 import { spawnSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { homedir } from "node:os";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import process from "node:process";
+import { resolveRepos } from "../lib/glob.mjs";
 
 const COLORS = {
 	red: "\x1b[31m",
@@ -90,24 +90,6 @@ async function applyFixes(reportEntries) {
 			process.chdir(cwdSave);
 		}
 	}
-}
-
-// Resolve a single-level glob like `~/github.com/*` to a list of absolute dirs.
-// Supports `~` expansion and `*` (any chars) in the last path segment.
-// Doesn't filter for dev-workflow.md here — that's the caller's job, since the
-// total-matched count is useful for the "skipped N non-project dirs" summary.
-function resolveRepos(pattern) {
-	const expanded = pattern.startsWith("~") ? join(homedir(), pattern.slice(1)) : pattern;
-	const lastSlash = expanded.lastIndexOf("/");
-	if (lastSlash < 0) return [];
-	const parent = expanded.slice(0, lastSlash) || "/";
-	const segment = expanded.slice(lastSlash + 1);
-	if (!existsSync(parent)) return [];
-	const re = new RegExp(`^${segment.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*")}$`);
-	return readdirSync(parent, { withFileTypes: true })
-		.filter((e) => e.isDirectory() && re.test(e.name))
-		.map((e) => join(parent, e.name))
-		.sort();
 }
 
 // ---------- runtime checks ----------
