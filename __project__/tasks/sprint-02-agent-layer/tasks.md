@@ -7,16 +7,16 @@ Mirror of [plan.md](plan.md). Tick each box as it lands. Status updates flow bac
 ## Committed (must finish to release v1.1.0)
 
 - [x] **T201** — Push unpushed `dev` commit (`learnings.md` + Phase 5 retro) to `origin/dev` (done 2026-05-04)
-- [ ] **T202** — Add Phase 0 — Provision to `templates/core/dev-workflow.md` + update Pipeline diagram
-- [ ] **T203** — Create `templates/core/.claude/commands/{spec,plan,build,test,review,ship,code-simplify}.md`
-- [ ] **T204** — Create `templates/core/.claude/settings.json` (enables `agent-skills@anthropic`)
-- [ ] **T205** — Create `templates/core/CLAUDE.md` skeleton (5 sections, all empty bodies)
-- [ ] **T206** — Create `templates/core/skills-lock.json` with `{ "version": 1, "skills": {} }`
-- [ ] **T207** — Parametrize `templates/core/scripts/release-check.sh` (`TEST_CMD` env var, comment block)
-- [ ] **T208** — Add `templates/core/scripts/feature-pr.sh` (`LINT_CMD`/`TYPECHECK_CMD`/`TEST_CMD` env vars, `+x` mode)
-- [ ] **T209** — Implement `src/commands/doctor.mjs` (runtime + project checks, output, exit codes, `--fix`)
-- [ ] **T210** — Wire `doctor` into `bin.mjs` dispatcher + update `--help`
-- [ ] **T211** — Make `init` auto-run `doctor` at end (skip with `--no-doctor`)
+- [x] **T202** — Add Phase 0 — Provision to `templates/core/dev-workflow.md` + update Pipeline diagram (60543a5)
+- [x] **T203** — Create `templates/core/.claude/commands/{spec,plan,build,test,review,ship,code-simplify}.md` (1910a29)
+- [x] **T204** — Create `templates/core/.claude/settings.json` (enables `agent-skills@anthropic`) (564ebce)
+- [x] **T205** — Create `templates/core/CLAUDE.md` skeleton (5 sections, all empty bodies) (564ebce)
+- [x] **T206** — Create `templates/core/skills-lock.json` with `{ "version": 1, "skills": {} }` (564ebce)
+- [x] **T207** — Parametrize `templates/core/scripts/release-check.sh` (`TEST_CMD` env var, comment block) (f002e33)
+- [x] **T208** — Add `templates/core/scripts/feature-pr.sh` (`LINT_CMD`/`TYPECHECK_CMD`/`TEST_CMD` env vars, `+x` mode) (2d2d752)
+- [x] **T209** — Implement `src/commands/doctor.mjs` (runtime + project checks, output, exit codes, `--fix`) (ff0bd12)
+- [x] **T210** — Wire `doctor` into `bin.mjs` dispatcher + update `--help` (9741b8a)
+- [x] **T211** — Make `init` auto-run `doctor` at end (skip with `--no-doctor`) (9741b8a)
 - [ ] **T212** — Tests for `doctor` (runtime missing path, drift path, all-green path, `--fix`, `--no-doctor`)
 - [ ] **T213** — Tests for new init/upgrade behavior on agent-layer files (idempotency, `--force`, drift)
 - [ ] **T214** — Update `README.md` (doctor command, agent-layer section, env-var docs, fresh-machine flow, multi-repo flow)
