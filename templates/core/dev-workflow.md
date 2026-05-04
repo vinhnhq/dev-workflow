@@ -46,10 +46,57 @@ You never need to save the script separately (unless you want `~/bin/bootstrap-w
 ## Pipeline at a Glance
 
 ```
-SPEC → PLAN → IMPLEMENT → TEST → REVIEW → RELEASE
+PROVISION → SPEC → PLAN → IMPLEMENT → TEST → REVIEW → RELEASE
 ```
 
 Each phase has a hard entry and exit condition. You don't move forward until the exit condition is met.
+
+---
+
+## Phase 0 — Provision
+
+**Entry:** Agent (human or LLM) joins the repo for the first time, OR the agent stack changes (a new plugin / skill / MCP server / CLI tool is needed).
+**Exit:** `bunx @vinhnnn/dev-workflow doctor` reports zero critical issues. Every plugin, skill, MCP server, and command-line tool the project depends on is installed in the agent's environment.
+
+### What to produce
+
+Nothing new. `init` already shipped the manifest files when the project was scaffolded:
+
+- `skills-lock.json` at repo root — declares required skills (GitHub-sourced, hash-pinned)
+- `.claude/settings.json` — declares enabled plugins
+- `.claude/commands/` — repo-local slash commands the workflow expects (`/spec`, `/plan`, `/build`, `/test`, `/review`, `/ship`, `/code-simplify`)
+- `CLAUDE.md` — context loaded into every agent session, including the Installed Skills table
+
+This phase is **verification**, not generation. Run `doctor`. Resolve every `✗` (critical) and review every `⚠` (warning). When `doctor` is green, move to Phase 1.
+
+### Why this phase exists
+
+Three concrete pains it removes:
+
+1. **Drift across projects.** When the same engineer maintains many repos, "what conventions does this one use?" becomes a context-switching tax. A declarative manifest in every repo (parsed by `doctor`) makes the answer machine-readable.
+2. **Onboarding tax.** A new contributor (or a fresh CI machine, or you on a new laptop) needs the exact toolchain the project expects. Without `doctor`, gaps surface as cryptic failures three commands later.
+3. **Fresh-machine reality.** Agents and harnesses install differently on every OS. The scaffold cannot assume Claude Code (or `gh`, or `bun`) is present. `doctor` checks; the user installs what's missing using copy-paste commands `doctor` prints.
+
+### Rules
+
+- **Add before use.** A PR that depends on a new plugin / skill / MCP server / CLI tool MUST add the row to `skills-lock.json` or `.claude/settings.json` in the same PR. Reviewer rejects otherwise.
+- **Remove when unused.** When a feature is ripped out, remove its tools from the manifest. Stale rows rot.
+- **Identity, not version.** This phase declares *what* is needed (`vercel-mcp`, `agent-skills@anthropic`). Versions live in `package.json` / lockfiles / `skills-lock.json`'s `computedHash` field — not in the human-facing process doc.
+- **Agent must STOP, not auto-add.** An agent that finds itself reaching for a tool not listed in the manifest must surface the gap and ask the human to update the manifest first. Auto-adding tools to the manifest defeats the point of having one.
+
+### Multi-repo provision
+
+For the engineer running many dev-workflow projects, audit and upgrade the whole fleet in one pass:
+
+```bash
+# Audit every dev-workflow project under a parent dir
+bunx @vinhnnn/dev-workflow doctor --repos '~/github.com/*'
+
+# Roll template updates across all of them (requires --yes or --dry-run)
+bunx @vinhnnn/dev-workflow upgrade --repos '~/github.com/*' --yes
+```
+
+`--repos` silently skips dirs that don't contain `dev-workflow.md`, so it's safe against globs that match unrelated projects.
 
 ---
 
