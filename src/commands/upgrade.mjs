@@ -8,22 +8,65 @@ import process from "node:process";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 import { diffFiles, renderDiff } from "../lib/diff-files.mjs";
+import { resolveRepos } from "../lib/glob.mjs";
 
 const TEMPLATES_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "templates");
 
 export default async function upgrade(args) {
 	let yes = false;
 	let dryRun = false;
-	for (const arg of args) {
+	let reposGlob = null;
+	for (let i = 0; i < args.length; i++) {
+		const arg = args[i];
 		if (arg === "--yes" || arg === "-y") yes = true;
 		else if (arg === "--dry-run") dryRun = true;
-		else {
+		else if (arg === "--repos") {
+			reposGlob = args[++i];
+			if (!reposGlob) {
+				console.error("--repos requires a glob value");
+				return 1;
+			}
+		} else {
 			console.error(`Unknown argument: ${arg}`);
 			return 1;
 		}
 	}
 
-	const cwd = process.cwd();
+	// Multi-repo mode is opinionated: per-file prompts across N repos are
+	// unusable. Force --yes (apply all) or --dry-run (preview only).
+	if (reposGlob && !yes && !dryRun) {
+		console.error("--repos requires --yes or --dry-run (interactive per-file prompts don't scale across repos)");
+		return 1;
+	}
+
+	if (reposGlob) {
+		const dirs = resolveRepos(reposGlob).filter((d) => existsSync(join(d, "dev-workflow.md")));
+		if (dirs.length === 0) {
+			console.log(`(no dev-workflow projects matched ${reposGlob})`);
+			return 0;
+		}
+		let totalUpdated = 0;
+		let totalSkipped = 0;
+		let totalUnchanged = 0;
+		for (const dir of dirs) {
+			console.log(`\n=== ${dir} ===`);
+			const counts = await upgradeForDir(dir, { yes, dryRun });
+			totalUpdated += counts.updated;
+			totalSkipped += counts.skipped;
+			totalUnchanged += counts.unchanged;
+		}
+		const verb = dryRun ? "would update" : "updated";
+		console.log(`\nSummary: ${verb} ${totalUpdated}, skipped ${totalSkipped}, unchanged ${totalUnchanged} across ${dirs.length} repo${dirs.length === 1 ? "" : "s"}`);
+		return 0;
+	}
+
+	const counts = await upgradeForDir(process.cwd(), { yes, dryRun });
+	const verb = dryRun ? "would update" : "updated";
+	console.log(`\n${verb} ${counts.updated}, skipped ${counts.skipped}, unchanged ${counts.unchanged}`);
+	return counts.aborted ? 1 : 0;
+}
+
+async function upgradeForDir(cwd, { yes, dryRun }) {
 	const installed = ["core", ...detectInstalledPresets(cwd)];
 	console.log(`detected: ${installed.join(", ")}`);
 
@@ -64,7 +107,7 @@ export default async function upgrade(args) {
 			if (!apply && !skipRest) {
 				if (!interactive) {
 					console.error("\nrefusing to prompt without a TTY — re-run with --yes or --dry-run");
-					return 1;
+					return { updated, skipped, unchanged, aborted: true };
 				}
 				const answer = await prompt("apply? [y]es / [n]o / [a]ll yes / [s]kip rest: ");
 				if (answer === "a" || answer === "all") {
@@ -91,10 +134,9 @@ export default async function upgrade(args) {
 		}
 	}
 
-	const verb = dryRun ? "would update" : "updated";
-	console.log(`\n${verb} ${updated}, skipped ${skipped}, unchanged ${unchanged}`);
-	return 0;
+	return { updated, skipped, unchanged };
 }
+
 
 function detectInstalledPresets(cwd) {
 	const presets = readdirSync(TEMPLATES_ROOT, { withFileTypes: true })

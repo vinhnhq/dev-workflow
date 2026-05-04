@@ -20,9 +20,15 @@ fi
 echo "PASS"
 
 # Gate 2: Tests
+# The test command is parametrized — defaults to `bun run test` to match
+# the most common stack, but any project can override:
+#   TEST_CMD="pnpm test"        bash scripts/release-check.sh
+#   TEST_CMD="npm test"         bash scripts/release-check.sh
+#   TEST_CMD="uv run pytest"    bash scripts/release-check.sh
+# Skip entirely with SKIP_TESTS=1 or FORCE_PASS=1.
 if [ "${SKIP_TESTS:-0}" != "1" ] && [ "${FORCE_PASS:-0}" != "1" ]; then
-  echo "Gate 2: Running tests..."
-  bun run test
+  echo "Gate 2: Running tests... (${TEST_CMD:-bun run test})"
+  ${TEST_CMD:-bun run test}
   echo "PASS"
 else
   echo "Gate 2: SKIPPED"

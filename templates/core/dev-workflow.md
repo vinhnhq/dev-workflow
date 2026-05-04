@@ -46,10 +46,57 @@ You never need to save the script separately (unless you want `~/bin/bootstrap-w
 ## Pipeline at a Glance
 
 ```
-SPEC → PLAN → IMPLEMENT → TEST → REVIEW → RELEASE
+PROVISION → SPEC → PLAN → IMPLEMENT → TEST → REVIEW → RELEASE
 ```
 
 Each phase has a hard entry and exit condition. You don't move forward until the exit condition is met.
+
+---
+
+## Phase 0 — Provision
+
+**Entry:** Agent (human or LLM) joins the repo for the first time, OR the agent stack changes (a new plugin / skill / MCP server / CLI tool is needed).
+**Exit:** `bunx @vinhnnn/dev-workflow doctor` reports zero critical issues. Every plugin, skill, MCP server, and command-line tool the project depends on is installed in the agent's environment.
+
+### What to produce
+
+Nothing new. `init` already shipped the manifest files when the project was scaffolded:
+
+- `skills-lock.json` at repo root — declares required skills (GitHub-sourced, hash-pinned)
+- `.claude/settings.json` — declares enabled plugins
+- `.claude/commands/` — repo-local slash commands the workflow expects (`/spec`, `/plan`, `/build`, `/test`, `/review`, `/ship`, `/code-simplify`)
+- `CLAUDE.md` — context loaded into every agent session, including the Installed Skills table
+
+This phase is **verification**, not generation. Run `doctor`. Resolve every `✗` (critical) and review every `⚠` (warning). When `doctor` is green, move to Phase 1.
+
+### Why this phase exists
+
+Three concrete pains it removes:
+
+1. **Drift across projects.** When the same engineer maintains many repos, "what conventions does this one use?" becomes a context-switching tax. A declarative manifest in every repo (parsed by `doctor`) makes the answer machine-readable.
+2. **Onboarding tax.** A new contributor (or a fresh CI machine, or you on a new laptop) needs the exact toolchain the project expects. Without `doctor`, gaps surface as cryptic failures three commands later.
+3. **Fresh-machine reality.** Agents and harnesses install differently on every OS. The scaffold cannot assume Claude Code (or `gh`, or `bun`) is present. `doctor` checks; the user installs what's missing using copy-paste commands `doctor` prints.
+
+### Rules
+
+- **Add before use.** A PR that depends on a new plugin / skill / MCP server / CLI tool MUST add the row to `skills-lock.json` or `.claude/settings.json` in the same PR. Reviewer rejects otherwise.
+- **Remove when unused.** When a feature is ripped out, remove its tools from the manifest. Stale rows rot.
+- **Identity, not version.** This phase declares *what* is needed (`vercel-mcp`, `agent-skills@anthropic`). Versions live in `package.json` / lockfiles / `skills-lock.json`'s `computedHash` field — not in the human-facing process doc.
+- **Agent must STOP, not auto-add.** An agent that finds itself reaching for a tool not listed in the manifest must surface the gap and ask the human to update the manifest first. Auto-adding tools to the manifest defeats the point of having one.
+
+### Multi-repo provision
+
+For the engineer running many dev-workflow projects, audit and upgrade the whole fleet in one pass:
+
+```bash
+# Audit every dev-workflow project under a parent dir
+bunx @vinhnnn/dev-workflow doctor --repos '~/github.com/*'
+
+# Roll template updates across all of them (requires --yes or --dry-run)
+bunx @vinhnnn/dev-workflow upgrade --repos '~/github.com/*' --yes
+```
+
+`--repos` silently skips dirs that don't contain `dev-workflow.md`, so it's safe against globs that match unrelated projects.
 
 ---
 
@@ -474,13 +521,91 @@ Document each known failure with a comment in the test file explaining why it is
 ## Phase 5 — Review (Knowledge Capture)
 
 **Entry:** Sprint tasks are done and tests pass.  
-**Exit:** Docs updated, ADRs finalized, ownership recorded.
+**Exit:** Docs updated, ADRs finalized, ownership recorded, sprint retro written.
 
 ### What to update
 
 1. **`docs/<domain>.md`** — update with any patterns, gotchas, or critical rules discovered during the sprint
 2. **`docs/decisions/`** — finalize any ADRs drafted during planning
 3. **`docs/knowledge-ownership.md`** — record who drove what
+4. **`docs/learnings.md`** — append continuous-improvement journal entries (see below)
+5. **`tasks/sprint-NN-name/retro.md`** — write the sprint-end retrospective (see below)
+
+### Two reflective artifacts, two cadences
+
+| File | Cadence | Format | Purpose |
+|------|---------|--------|---------|
+| `docs/learnings.md` | Continuous — write the moment a surprise happens | Append-only, dated, 1-3 sentences + **Promote?** verdict | Buffer for surprises that haven't earned a permanent home yet |
+| `tasks/sprint-NN-name/retro.md` | Punctuated — once per sprint, after the release ships | Structured: what worked, what didn't, conventions changed/added, carried over | Sprint-end synthesis — what we'll do differently next time |
+
+These are different artifacts. `learnings.md` is granular and noisy; `retro.md` is the structured synthesis at sprint exit. They feed each other — sprint-end retro often pulls from the learnings entries accumulated mid-sprint.
+
+### `learnings.md` format
+
+```markdown
+# Learnings — append on the fly
+
+## YYYY-MM-DD · <short, specific title>
+
+<1-3 sentences: what happened, what you learned. Concrete, not abstract.>
+
+**Promote?** <yes / no / later> — <where it should go: ADR, dev-workflow.md, CLAUDE.md, code, or "drop">
+```
+
+**Promotion rules** (apply at the start of every sprint):
+
+| If an entry is | Action |
+|----------------|--------|
+| Marked **Promote? yes** + target exists | Apply it; mark entry **✓ promoted** with link |
+| Marked **Promote? yes** but no target yet | Open ADR or doc draft; link from the entry |
+| Marked **Promote? no** + >90 days old | Delete |
+| Same lesson recurs 3+ times | Force promote — convention is missing |
+| Marked **Promote? later** + no movement after 3 sprints | Delete by default |
+
+The file is a buffer, not a destination. Without these rules it becomes a graveyard — same default-delete discipline `backlog/ideas.md` uses.
+
+### `retro.md` format
+
+One per sprint, lives inside the sprint folder:
+
+```markdown
+# Retro — Sprint NN: <Name>
+
+**Released:** vX.Y.Z on YYYY-MM-DD
+**Duration:** <e.g., 2 weeks, half a day>
+
+## What we shipped
+<bullet list of Committed tasks ✓ done, plus any Stretch/Blocked status>
+
+## What worked
+<2-4 bullets, concrete, name the wins>
+
+## What didn't
+<2-4 bullets, concrete, name the misses without blame>
+
+## Conventions changed
+<bullet list of changes to existing rules — new excludes, new gates, etc>
+
+## Conventions added
+<bullet list of new rules introduced — new commit scopes, new file types, etc>
+
+## Carried over to next sprint
+<bullet list of unfinished or blocked work that rolls forward>
+```
+
+Keep both files honest. The misses section is more valuable than the wins section — wins repeat themselves; misses are the input to next sprint's plan.
+
+### `knowledge-ownership.md` format
+
+```markdown
+# Knowledge Ownership
+
+| Sprint | Task | Solution | Owner | Notes |
+|--------|------|----------|-------|-------|
+| 04 | ViewTransition animations | CSS class toggle | collab | Tried native ViewTransition first — not ready |
+
+Owner values: `you` (developer), `AI` (agent), `collab` (iterated together)
+```
 
 ### `knowledge-ownership.md` format
 

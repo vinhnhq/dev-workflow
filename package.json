@@ -1,7 +1,7 @@
 {
 	"name": "@vinhnnn/dev-workflow",
-	"version": "1.0.0",
-	"description": "Opinionated dev workflow scaffolder — spec → plan → implement → test → review → release. Three-bucket sprint planning, PR-based releases, optional stack presets.",
+	"version": "1.1.0",
+	"description": "Opinionated dev workflow scaffolder — provision → spec → plan → implement → test → review → release. Three-bucket sprint planning, PR-based releases, agent layer, doctor environment audit, multi-repo bulk operations.",
 	"type": "module",
 	"bin": {
 		"dev-workflow": "./bin.mjs"

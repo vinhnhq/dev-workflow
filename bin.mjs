@@ -8,6 +8,7 @@ const COMMANDS = {
 	init: () => import("./src/commands/init.mjs"),
 	upgrade: () => import("./src/commands/upgrade.mjs"),
 	"add-preset": () => import("./src/commands/add-preset.mjs"),
+	doctor: () => import("./src/commands/doctor.mjs"),
 };
 
 const HELP = `dev-workflow — scaffold and maintain the dev-workflow convention in any project
@@ -16,6 +17,7 @@ Usage:
   dev-workflow init [--preset <name>]    Scaffold workflow files into the current directory
   dev-workflow upgrade                   Diff against latest templates and apply updates
   dev-workflow add-preset <name>         Add a stack preset to an init'd project
+  dev-workflow doctor [--fix]            Audit environment + project; print missing pieces
   dev-workflow --version                 Print package version
   dev-workflow --help                    Print this help
 
@@ -23,10 +25,13 @@ Flags:
   --preset <name>     One of: nextjs (more presets to come)
   --dry-run           Show what would change without writing files
   --yes               Apply all upgrades without prompting (upgrade only)
+  --no-doctor         Skip the post-init audit (init only)
+  --fix               Apply safe fixes for project drift (doctor only)
 
 Examples:
   bunx @vinhnnn/dev-workflow init --preset nextjs
   bunx @vinhnnn/dev-workflow upgrade
+  bunx @vinhnnn/dev-workflow doctor
   bunx @vinhnnn/dev-workflow add-preset nextjs
 `;
 
