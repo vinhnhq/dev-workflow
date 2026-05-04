@@ -6,7 +6,8 @@
 // Zero npm deps.
 
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { join } from "node:path";
 import process from "node:process";
 
@@ -24,9 +25,17 @@ const REQUIRED_COMMANDS = ["spec", "plan", "build", "test", "review", "ship", "c
 
 export default async function doctor(args) {
 	let fix = false;
-	for (const a of args) {
+	let reposGlob = null;
+	for (let i = 0; i < args.length; i++) {
+		const a = args[i];
 		if (a === "--fix") fix = true;
-		else if (a === "--no-color") {
+		else if (a === "--repos") {
+			reposGlob = args[++i];
+			if (!reposGlob) {
+				console.error("--repos requires a glob value");
+				return 1;
+			}
+		} else if (a === "--no-color") {
 			// noop; useColor reads isTTY at call time
 		} else {
 			console.error(`Unknown argument: ${a}`);
@@ -36,27 +45,69 @@ export default async function doctor(args) {
 
 	const useColor = process.stdout.isTTY;
 
+	// Runtime checks always run once at the top — they're machine-level,
+	// not project-level. Same answer whether we're auditing one repo or fifty.
 	const runtime = checkRuntime();
-	const projectDir = process.cwd();
-	const isProject = existsSync(join(projectDir, "dev-workflow.md"));
-	const project = isProject ? checkProject(projectDir) : null;
 
-	printReport(runtime, project, useColor);
+	// Resolve the list of project dirs to audit.
+	// - No --repos: just the cwd (single-repo mode, today's behavior).
+	// - --repos <glob>: every dir matching the glob that contains dev-workflow.md.
+	const projectDirs = reposGlob ? resolveRepos(reposGlob).filter((d) => existsSync(join(d, "dev-workflow.md"))) : [process.cwd()];
 
-	const criticals = countLevel([runtime, project], "crit");
-	const warnings = countLevel([runtime, project], "warn");
+	const reportEntries = [];
+	for (const dir of projectDirs) {
+		const isProject = existsSync(join(dir, "dev-workflow.md"));
+		const project = isProject ? checkProject(dir) : null;
+		reportEntries.push({ dir, project, isProject });
+	}
+
+	printReport(runtime, reportEntries, useColor, { multiRepo: reposGlob !== null, totalMatchedByGlob: reposGlob ? resolveRepos(reposGlob).length : 0 });
+
+	const projectChecks = reportEntries.flatMap((e) => e.project ?? []);
+	const criticals = countLevel([runtime, projectChecks], "crit");
 
 	if (fix) {
-		if (!isProject) {
-			console.log("\n--fix skipped: cwd is not a dev-workflow project");
-		} else {
-			console.log("\n--- applying fixes ---");
-			const { default: upgrade } = await import("./upgrade.mjs");
-			await upgrade(["--yes"]);
-		}
+		await applyFixes(reportEntries);
 	}
 
 	return criticals > 0 ? 1 : 0;
+}
+
+async function applyFixes(reportEntries) {
+	const fixable = reportEntries.filter((e) => e.isProject);
+	if (fixable.length === 0) {
+		console.log("\n--fix skipped: no dev-workflow projects to fix");
+		return;
+	}
+	const { default: upgrade } = await import("./upgrade.mjs");
+	for (const { dir } of fixable) {
+		console.log(`\n--- applying fixes in ${dir} ---`);
+		const cwdSave = process.cwd();
+		process.chdir(dir);
+		try {
+			await upgrade(["--yes"]);
+		} finally {
+			process.chdir(cwdSave);
+		}
+	}
+}
+
+// Resolve a single-level glob like `~/github.com/*` to a list of absolute dirs.
+// Supports `~` expansion and `*` (any chars) in the last path segment.
+// Doesn't filter for dev-workflow.md here — that's the caller's job, since the
+// total-matched count is useful for the "skipped N non-project dirs" summary.
+function resolveRepos(pattern) {
+	const expanded = pattern.startsWith("~") ? join(homedir(), pattern.slice(1)) : pattern;
+	const lastSlash = expanded.lastIndexOf("/");
+	if (lastSlash < 0) return [];
+	const parent = expanded.slice(0, lastSlash) || "/";
+	const segment = expanded.slice(lastSlash + 1);
+	if (!existsSync(parent)) return [];
+	const re = new RegExp(`^${segment.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*")}$`);
+	return readdirSync(parent, { withFileTypes: true })
+		.filter((e) => e.isDirectory() && re.test(e.name))
+		.map((e) => join(parent, e.name))
+		.sort();
 }
 
 // ---------- runtime checks ----------
@@ -198,20 +249,35 @@ function pushSkillsLock(out, dir) {
 
 // ---------- output ----------
 
-function printReport(runtime, project, useColor) {
+function printReport(runtime, reportEntries, useColor, { multiRepo, totalMatchedByGlob }) {
 	console.log("\nRuntime:");
 	for (const c of runtime) printCheck(c, useColor);
 
-	if (project) {
-		console.log("\nProject:");
-		for (const c of project) printCheck(c, useColor);
+	if (multiRepo) {
+		const skipped = totalMatchedByGlob - reportEntries.length;
+		console.log(`\nProjects (${reportEntries.length} dev-workflow project${reportEntries.length === 1 ? "" : "s"} from glob${skipped > 0 ? `, ${skipped} skipped — no dev-workflow.md` : ""}):`);
+		if (reportEntries.length === 0) {
+			console.log("  (none)");
+		}
+		for (const { dir, project } of reportEntries) {
+			console.log(`\n=== ${dir} ===`);
+			for (const c of project) printCheck(c, useColor);
+		}
 	} else {
-		console.log("\nProject: (skipped — cwd is not a dev-workflow project)");
+		const entry = reportEntries[0];
+		if (entry?.project) {
+			console.log("\nProject:");
+			for (const c of entry.project) printCheck(c, useColor);
+		} else {
+			console.log("\nProject: (skipped — cwd is not a dev-workflow project)");
+		}
 	}
 
-	const criticals = countLevel([runtime, project], "crit");
-	const warnings = countLevel([runtime, project], "warn");
-	console.log(`\nSummary: ${criticals} critical, ${warnings} warning${warnings === 1 ? "" : "s"}`);
+	const projectChecks = reportEntries.flatMap((e) => e.project ?? []);
+	const criticals = countLevel([runtime, projectChecks], "crit");
+	const warnings = countLevel([runtime, projectChecks], "warn");
+	const reposNote = multiRepo ? ` across ${reportEntries.length} repo${reportEntries.length === 1 ? "" : "s"}` : "";
+	console.log(`\nSummary: ${criticals} critical, ${warnings} warning${warnings === 1 ? "" : "s"}${reposNote}`);
 }
 
 function printCheck(c, useColor) {
