@@ -13,6 +13,7 @@ export default async function init(args) {
 	let preset = null;
 	let force = false;
 	let dryRun = false;
+	let noDoctor = false;
 
 	for (let i = 0; i < args.length; i++) {
 		const arg = args[i];
@@ -26,6 +27,8 @@ export default async function init(args) {
 			force = true;
 		} else if (arg === "--dry-run") {
 			dryRun = true;
+		} else if (arg === "--no-doctor") {
+			noDoctor = true;
 		} else {
 			console.error(`Unknown argument: ${arg}`);
 			return 1;
@@ -61,6 +64,18 @@ export default async function init(args) {
 	if (!dryRun && totalSkipped > 0 && !force) {
 		console.log("re-run with --force to overwrite existing files");
 	}
+
+	// Auto-run doctor so a fresh user immediately sees what's missing on
+	// their machine (Claude Code, gh, bun, etc.). Skip on --dry-run since
+	// no files were written and doctor would show drift against nothing.
+	// Init's return code stays unaffected by doctor's findings — init
+	// itself succeeded.
+	if (!noDoctor && !dryRun) {
+		console.log("\n--- environment check ---");
+		const { default: doctor } = await import("./doctor.mjs");
+		await doctor([]);
+	}
+
 	return 0;
 }
 
