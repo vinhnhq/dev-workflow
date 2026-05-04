@@ -17,12 +17,12 @@ Mirror of [plan.md](plan.md). Tick each box as it lands. Status updates flow bac
 - [x] **T209** — Implement `src/commands/doctor.mjs` (runtime + project checks, output, exit codes, `--fix`) (ff0bd12)
 - [x] **T210** — Wire `doctor` into `bin.mjs` dispatcher + update `--help` (9741b8a)
 - [x] **T211** — Make `init` auto-run `doctor` at end (skip with `--no-doctor`) (9741b8a)
-- [ ] **T212** — Tests for `doctor` (runtime missing path, drift path, all-green path, `--fix`, `--no-doctor`)
-- [ ] **T213** — Tests for new init/upgrade behavior on agent-layer files (idempotency, `--force`, drift)
-- [ ] **T214** — Update `README.md` (doctor command, agent-layer section, env-var docs, fresh-machine flow, multi-repo flow)
-- [ ] **T219** — Implement `--repos <glob>` flag for `doctor` (multi-repo audit, aggregated output)
-- [ ] **T220** — Implement `--repos <glob>` flag for `upgrade` (requires `--yes` or `--dry-run` in multi-repo mode)
-- [ ] **T221** — Tests for `--repos` flag (3-tmpdir fixture, audits/upgrades/skips)
+- [x] **T212** — Tests for `doctor` (runtime missing path, drift path, all-green path, `--fix`, `--no-doctor`) (77942a8)
+- [x] **T213** — Tests for new init/upgrade behavior on agent-layer files (idempotency, `--force`, drift) (77942a8)
+- [x] **T214** — Update `README.md` (doctor command, agent-layer section, env-var docs, fresh-machine flow, multi-repo flow) (24bd099)
+- [x] **T219** — Implement `--repos <glob>` flag for `doctor` (multi-repo audit, aggregated output) (351a74c)
+- [x] **T220** — Implement `--repos <glob>` flag for `upgrade` (requires `--yes` or `--dry-run` in multi-repo mode) (4653b27)
+- [x] **T221** — Tests for `--repos` flag (3-tmpdir fixture, audits/upgrades/skips) (4653b27)
 - [ ] **T215** — Bump `package.json` version `1.0.0` → `1.1.0` + commit
 - [ ] **T216** — `gh pr create --base dev` to land sprint-02-agent-layer; squash-merge after review; then `bash scripts/release-check.sh` on `dev` → opens release PR `dev` → `main` → human merge
 - [ ] **T217** — `git tag v1.1.0 && git push --tags` → `publish.yml` fires → npm publish; verify `npm view ... version` = 1.1.0

@@ -23,13 +23,13 @@ See [plan.md](sprint-02-agent-layer/plan.md) · [tasks.md](sprint-02-agent-layer
 | T209 | Implement `src/commands/doctor.mjs` (runtime + project checks, `--fix`)         | ✓ done     |
 | T210 | Wire `doctor` into `bin.mjs` dispatcher; update `--help`                        | ✓ done     |
 | T211 | Hook `init` to call `doctor` at end unless `--no-doctor`                        | ✓ done     |
-| T212 | Tests: `doctor` (mocked PATH for runtime; real fs for project checks)           | · backlog  |
-| T213 | Tests: agent-layer files via `init` / `init --force` / `upgrade` drift          | · backlog  |
-| T214 | Update `README.md` — document `doctor`, agent layer, parametrized scripts       | · backlog  |
+| T212 | Tests: `doctor` (mocked PATH for runtime; real fs for project checks)           | ✓ done     |
+| T213 | Tests: agent-layer files via `init` / `init --force` / `upgrade` drift          | ✓ done     |
+| T214 | Update `README.md` — document `doctor`, agent layer, parametrized scripts       | ✓ done     |
 | T215 | Bump `package.json` version `1.0.0` → `1.1.0`                                   | · backlog  |
 | T216 | Run `scripts/release-check.sh` → opens release PR `dev` → `main`                | · backlog  |
 | T217 | Tag `v1.1.0` → `publish.yml` fires → `npm publish` with provenance              | · backlog  |
-| T219 | Implement `--repos <glob>` flag for `doctor` (multi-repo audit + aggregated output) | · backlog  |
-| T220 | Implement `--repos <glob>` flag for `upgrade` (multi-repo apply, `--yes` aware) | · backlog  |
-| T221 | Tests: `--repos` for both commands (multi-tmpdir fixture)                       | · backlog  |
+| T219 | Implement `--repos <glob>` flag for `doctor` (multi-repo audit + aggregated output) | ✓ done     |
+| T220 | Implement `--repos <glob>` flag for `upgrade` (multi-repo apply, `--yes` aware) | ✓ done     |
+| T221 | Tests: `--repos` for both commands (multi-tmpdir fixture)                       | ✓ done     |
 | T218 | Stretch: smoke-test `bunx ...@1.1.0 upgrade` in `101-sliding-puzzle`            | ↷ stretch  |
