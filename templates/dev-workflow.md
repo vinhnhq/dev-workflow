@@ -45,6 +45,66 @@ If a project genuinely needs a different stack (Python API, Go service, React Na
 
 ---
 
+## Recommended Claude Code plugins and skills
+
+When Claude is helping set the project up, propose enabling these. Skip any the user declines — they're starters, not requirements. All come from public Anthropic / Vercel / community sources.
+
+### Plugins (enable both)
+
+| Plugin                                     | Why                                                                                                                                                                                            |
+|--------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `agent-skills@addy-agent-skills`           | Provides the workflow skills — `spec` / `plan` / `build` / `test` / `review` / `ship` / `code-simplify` — plus debugging, security, code review, TDD, and more. Mirrors the six-phase process in this file. |
+| `frontend-design@claude-plugins-official`  | Provides the `frontend-design` skill — distinctive, production-grade UI generation that avoids the generic AI aesthetic. Valuable when scaffolding initial components and pages.               |
+
+### Skill bucket — Web quality (audit time)
+
+Run before shipping a milestone. Lighthouse + skill output should both clear the [Quality bar](#quality-bar).
+
+| Skill                | When to use                                                                                                |
+|----------------------|------------------------------------------------------------------------------------------------------------|
+| `web-quality-audit`  | Comprehensive sweep covering performance, accessibility, SEO, and best practices. Run before each release. |
+| `accessibility`      | WCAG 2.2, keyboard nav, screen-reader support. Run on every shipped mode.                                  |
+| `core-web-vitals`    | LCP / INP / CLS optimization. Run when Lighthouse Performance < 90.                                        |
+| `performance`        | Load time, bundle size, image optimization. Companion to `core-web-vitals` for non-CWV bottlenecks.        |
+| `seo`                | Meta tags, structured data, sitemap. Run when the project is publicly indexable.                           |
+| `best-practices`     | Modern security, compatibility, code quality patterns. Worth a pass before each release.                   |
+
+### Skill bucket — React / Next.js (build time)
+
+| Skill                              | When to use                                                                                                          |
+|------------------------------------|----------------------------------------------------------------------------------------------------------------------|
+| `vercel-react-best-practices`      | React 19 / Next 15 performance patterns from Vercel Engineering. Apply when writing or refactoring components.       |
+| `vercel-composition-patterns`      | Compound components, render props, context — when designing reusable component APIs.                                 |
+| `vercel-react-view-transitions`    | Implementation guide for `<ViewTransition>`, `addTransitionType`, route transitions. Required reading when wiring screen / state animations described in [React 19 features in use](#react-19-features-in-use). |
+
+### Skill bucket — Design and UX
+
+| Skill                       | When to use                                                                                  |
+|-----------------------------|----------------------------------------------------------------------------------------------|
+| `web-design-guidelines`     | UI / a11y review against the Web Interface Guidelines. Run alongside `accessibility`.        |
+| `frontend-design`           | (From the `frontend-design` plugin above.) Use when generating polished initial screens.     |
+
+### Skill bucket — Deploy
+
+| Skill                       | When to use                                                                       |
+|-----------------------------|-----------------------------------------------------------------------------------|
+| `deploy-to-vercel`          | When the user says "deploy" or "push it live." Default deployment target.         |
+| `vercel-cli-with-tokens`    | Token-based Vercel deploys (CI, automation). Use when interactive login isn't viable. |
+
+### Skill bucket — Mobile (optional)
+
+Only relevant if the project is React Native / Expo. Skip for web-only projects.
+
+| Skill                          | When to use                                            |
+|--------------------------------|--------------------------------------------------------|
+| `vercel-react-native-skills`   | RN / Expo best practices, list performance, native modules. |
+
+### Installation
+
+Plugins are toggled in `.claude/settings.json` (`enabledPlugins`). Skills are pinned in `skills-lock.json` at the project root. Use whatever skill manager Claude Code currently provides — don't fabricate CLI commands. If Claude offers to install all of these in one pass, ask the user which buckets are relevant before bulk-enabling: every loaded skill costs context tokens.
+
+---
+
 ## Architectural rules
 
 These are non-negotiable; they keep logic testable and portable.
