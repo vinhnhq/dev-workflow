@@ -8,11 +8,13 @@ Apply this preset AFTER following the framework-agnostic setup in `dev-workflow.
 
 ## Assumptions
 
-- Next.js 15 App Router + TypeScript
-- Bun as package manager + runner (swap to pnpm/npm if preferred — commands stay similar)
-- Playwright for E2E and integration tests
+- Next.js 15 App Router + TypeScript (strict)
+- React 19 — `<Activity>` and `<ViewTransition>` are first-class
+- Bun as package manager, runtime, and test runner (swap to pnpm/npm if preferred — commands stay similar)
 - Biome for lint + format (replaces ESLint + Prettier)
-- Tailwind for styling (common but not required)
+- Tailwind v4 + shadcn/ui for UI
+- ts-pattern + purify-ts for typed state machines and partial functions
+- Playwright for E2E smoke tests
 
 ---
 
@@ -142,6 +144,85 @@ Append to `AGENTS.md` at repo root:
 - `next/font` self-hosted, subset aggressively for CJK.
 - For i18n, prefer next-intl with localized pathnames (see ADRs).
 ```
+
+---
+
+## Library defaults
+
+Beyond the bare Next.js + Bun + Biome + Playwright baseline, every new project ships with these libraries unless the project's nature forces a different choice:
+
+| Library          | Use                                                                                          |
+|------------------|----------------------------------------------------------------------------------------------|
+| **Tailwind v4**  | Styling. Drop to v3 only if a v4 regression blocks the project.                              |
+| **shadcn/ui**    | UI primitives. Commit components to `src/lib/ui/`, edit them in place, never wrap.           |
+| **ts-pattern**   | Exhaustive `match()` for state machines and discriminated-union dispatch.                    |
+| **purify-ts**    | `Maybe` / `Either` for partial functions. No `throw` in `lib/`.                              |
+
+---
+
+## Pure boundary at `src/lib/`
+
+Anything in `src/lib/` is **pure**: no `react`, `next/*`, DOM globals, `fetch`, or `Date.now()`. Time and randomness flow as parameters (`now: number`, `rng: () => number`).
+
+Why this matters more than it looks: pure logic ports to a server runtime (Edge, Workers, Partykit) without rewriting. Discovering the rule mid-project is expensive; setting it day one is free.
+
+Enforce with Biome `noRestrictedImports` against `src/lib/**`.
+
+---
+
+## State machines via `ts-pattern`
+
+State transitions live in pure reducers using `match([state, event]).with(...).exhaustive()`. The exhaustiveness check guarantees that adding a new state or event without handling it fails the type check. Don't hand-roll `switch` statements that drift from the type union.
+
+---
+
+## Functional error types via `purify-ts`
+
+- Anything that can fail returns `Either<Err, Ok>`.
+- Anything that can be absent returns `Maybe<T>`.
+- UI code unwraps with `.caseOf({ Just, Nothing })` or `.caseOf({ Left, Right })`. Never `.unsafeCoerce()`.
+
+---
+
+## React 19 features in use
+
+- **`<Activity mode="hidden">`** preserves screen state across navigation without re-mount cost (e.g. a config screen's form state when entering the next screen).
+- **`<ViewTransition>`** + `addTransitionType('a' | 'b' | 'c')` animates screen and state changes via the View Transitions API; CSS pseudo-elements fork on the type. See the `vercel-react-view-transitions` skill.
+- **`prefers-reduced-motion: reduce`** shortens transitions to ~50 ms but does not remove animations that convey correctness (e.g. a flash on a successful match).
+
+---
+
+## Test layering
+
+The preset uses Playwright for E2E. Add a unit/component layer for projects with non-trivial pure logic:
+
+| Layer                | Tool                                                                | Where                       | Command     |
+|----------------------|---------------------------------------------------------------------|-----------------------------|-------------|
+| Unit / property      | `bun test` (built-in)                                               | `src/lib/**/__tests__/`     | `bun test`  |
+| Component            | `bun test` + `happy-dom` + `@testing-library/react`                 | `src/**/__tests__/`         | `bun test`  |
+| E2E smoke            | Playwright                                                          | `e2e/`                      | `bun e2e`   |
+
+When adopting the unit layer, add `"e2e": "playwright test"` to `package.json` and remove the `"test"` script — Bun's `bun test` is a built-in subcommand, not an npm script. If a project is E2E-only, keep `"test": "playwright test"` as in the baseline above.
+
+---
+
+## Default scope choices
+
+These are **defaults**, not laws — override per-project if a feature genuinely requires it.
+
+- **Auth** — anonymous play first; add identity only when a feature requires it.
+- **DB** — none in v1; `localStorage` where possible. Defer Postgres / SQLite.
+- **Multiplayer** — solo or single-player ships first; online ships in a later version. The pure boundary above pays for itself when this happens.
+- **Deployment** — Vercel by default. If realtime sockets are needed, decide transport (Partykit, Liveblocks, Supabase Realtime, or Socket.IO on Fly/Render) at the start of the online version, not in v1.
+
+---
+
+## Quality bar
+
+- `lib/` line coverage ≥ 90%.
+- One Playwright smoke test per shipped mode.
+- Lighthouse on the main screen: Performance ≥ 90, Accessibility ≥ 95.
+- `bun test`, `bun lint`, `bunx tsc --noEmit` all green before any task moves to `done`.
 
 ---
 
