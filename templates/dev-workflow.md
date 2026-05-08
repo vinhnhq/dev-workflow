@@ -30,6 +30,68 @@ Tooling, conventions, architecture rules, process, quality bar, default scope. A
 
 ---
 
+## Engineering principles
+
+How Claude should work on Vinh's projects, regardless of stack. These bias toward caution over raw speed; for trivial tasks, use judgment. **Apply on every task.**
+
+### 1. Think before coding
+
+Don't assume. Don't hide confusion. Surface tradeoffs.
+
+- State assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them — don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+### 2. Simplicity first
+
+Minimum code that solves the problem. Nothing speculative.
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you wrote 200 lines and it could be 50, rewrite it.
+
+The check: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+### 3. Surgical changes
+
+Touch only what you must. Clean up only your own mess.
+
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it — don't delete it.
+- Remove imports/variables/functions that **your** changes made unused. Don't remove pre-existing dead code unless asked.
+
+The test: every changed line should trace directly to the request.
+
+### 4. Goal-driven execution
+
+Define success criteria. Loop until verified.
+
+Transform tasks into verifiable goals:
+
+- "Add validation" → "Write tests for invalid inputs, then make them pass."
+- "Fix the bug" → "Write a test that reproduces it, then make it pass."
+- "Refactor X" → "Ensure tests pass before and after."
+
+For multi-step tasks, state a brief plan with verification steps. Strong success criteria let Claude loop independently; weak criteria ("make it work") force constant clarification.
+
+### 5. Spec before code
+
+If the request is outcome-only, ask for the how before writing anything.
+
+- Outcome prompt: "add login", "fix the bug", "make it faster" → ask which files, function signatures, data shapes.
+- Spec prompt: "add `validateEmail(input: string): boolean` to `lib/validation.ts`" → proceed.
+- AI-generated code passes the same review bar as hand-written: factoring, tests, conventions, PR size. No vibe-coding shortcuts.
+- Work in thin slices: one task → test → commit → next. Never batch a sprint and review a wall of changes at the end.
+
+**These principles are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions arrive before implementation rather than after mistakes.
+
+---
+
 ## Stack defaults
 
 - **Next.js 15** App Router, `src/` layout
