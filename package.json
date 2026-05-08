@@ -1,6 +1,6 @@
 {
 	"name": "@vinhnnn/dev-workflow",
-	"version": "2.0.0",
+	"version": "2.1.0",
 	"description": "Drops a single dev-workflow.md into your project. Claude Code reads it, asks the project-specific questions, and scaffolds from there. No multi-file template.",
 	"type": "module",
 	"bin": {
