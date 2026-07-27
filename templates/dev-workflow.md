@@ -343,6 +343,16 @@ A `SessionEnd` hook that parses the session transcript (per-model tokens, durati
 
 ---
 
+## Brownfield adoption — installing this into a legacy project
+
+The seed works on existing codebases, but the order inverts: **audit before gates, ratchet instead of block.**
+
+1. **Seed + materialize the pipeline** as in the init protocol — but do NOT enable blocking gates yet.
+2. **Baseline audit first** (agent fan-out): map the system (routes, data flows, deps), find the perf/security hotspots with `file:line` evidence, and record the landmines. Output = a handoff pack under `__project__/reference/` + a CLAUDE.md whose gotchas section is written from findings, not aspirations.
+3. **Gates at the achievable baseline, then ratchet.** Day one CI = build + format-check only (format the whole repo once, own the churn). Then tighten one notch at a time — lint rules promoted from warn→error as counts hit zero, coverage threshold set at *current* coverage and raised with each version, type-aware rules last. A gate the repo can't pass teaches everyone to ignore CI; a ratchet that only moves forward teaches the repo to heal. **Never lower a ratchet.**
+4. **Then the normal loop applies**: spec the first version, TDD-ordered backlog, ship ritual, QA subagent, write-once docs — new work meets the full bar immediately; legacy code meets it as it gets touched.
+5. **Refactor legacy toward the target per-subsystem** (strangler fig, vertical slices): pick the subsystem with the most concrete pain, refactor it end-to-end behind its existing interface, ship it through the ritual, repeat. Calibrate to actual pain, not aesthetics — if you can't name the pain a refactor removes, skip it. Big-bang rewrites are a separate product decision, not a refactor.
+
 ## When NOT to follow this protocol
 
 - **Trivial changes** (typo fix, config tweak, dependency bump) — just lint, typecheck, push. Don't write a spec for a one-line fix.
