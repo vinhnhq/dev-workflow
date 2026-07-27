@@ -51,7 +51,12 @@ if (!transcript || !existsSync(transcript)) process.exit(0);
 // transcript, under the session's tmp dir: tasks/<agentId>.output, same
 // JSONL shape. Include them or the logged cost understates every session
 // that spawned an agent — which, with the ship ritual, is most of them.
-const agentDir = `/private/tmp/claude-${process.getuid?.() ?? ""}/${cwd.replace(/[/.]/g, "-")}/${fullSessionId}/tasks`;
+// `/tmp`, not `/private/tmp`: macOS resolves the former to the latter via
+// symlink, while on Linux `/private` does not exist at all — hardcoding it
+// there makes this silently find nothing, i.e. the exact undercount the
+// subagent scan exists to prevent. Not os.tmpdir(): on macOS that returns
+// /var/folders/…, which is a different directory.
+const agentDir = `/tmp/claude-${process.getuid?.() ?? ""}/${cwd.replace(/[/.]/g, "-")}/${fullSessionId}/tasks`;
 const agentFiles = existsSync(agentDir)
   ? readdirSync(agentDir)
       .filter((f) => f.endsWith(".output"))

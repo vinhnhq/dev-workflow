@@ -161,7 +161,10 @@ test("a formatter-mangled cumulative line is healed, not read back as data", () 
 // session that ran a QA subagent — with the ship ritual, most of them.
 test("subagent transcripts are counted and surfaced in the models column", () => {
 	const ctx = setup({ sessionId: "5555aaaa6666" });
-	const agentDir = `/private/tmp/claude-${process.getuid?.() ?? ""}/${ctx.cwd.replace(/[/.]/g, "-")}/${ctx.sessionId}/tasks`;
+	// Must match the script's own path construction. `/tmp` deliberately —
+	// see the comment there; this test caught the /private/tmp version
+	// failing on Linux while passing on macOS.
+	const agentDir = `/tmp/claude-${process.getuid?.() ?? ""}/${ctx.cwd.replace(/[/.]/g, "-")}/${ctx.sessionId}/tasks`;
 	mkdirSync(agentDir, { recursive: true });
 	writeFileSync(join(agentDir, "agent-1.output"), turn("claude-haiku-4-5", "2026-07-27T10:15:00.000Z"));
 
