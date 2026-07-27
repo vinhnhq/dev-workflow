@@ -10,16 +10,27 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write  # required for npm provenance
+      # The OIDC id-token IS the credential under trusted publishing —
+      # there is no NPM_TOKEN. Provenance is signed from it too.
+      id-token: write
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
           node-version: 20
           registry-url: "https://registry.npmjs.org"
+
+      # Trusted publishing needs npm >= 11.5.1; node 20 ships npm 10.x.
+      # Pinning node instead would trade one expiry problem for a version one.
+      - name: Upgrade npm
+        run: npm install -g npm@latest
+
       - name: Run tests
         run: npm test
+
+      # No env: block. The trusted publisher (npmjs.com → package settings)
+      # is configured for vinhnhq/dev-workflow + this workflow filename —
+      # renaming this file breaks the trust and the publish 404s.
+      # --provenance is omitted: it is automatic under trusted publishing.
       - name: Publish
-        run: npm publish --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public
