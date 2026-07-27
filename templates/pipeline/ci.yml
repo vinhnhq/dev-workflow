@@ -1,9 +1,12 @@
-# Quality gate (added 2026-07 — a broken test once shipped because only
-# Vercel's build ran in CI; a broken test once shipped with only the deploy build as CI). Vercel still owns
+# Seeded from @vinhnnn/dev-workflow templates/pipeline/ — adapt the
+# [bracketed] parts to this project, then own it.
+#
+# Quality gate. Why it exists: a broken test once shipped because the only
+# thing running in CI was the deploy provider's build. The host still owns
 # deploys; this runs the local gates on every PR.
 #
 # Secrets:
-#   DATABASE_TEST_URL — Neon test-branch connection string. Without it,
+#   [DATABASE_TEST_URL] — the test-database connection string. Without it,
 #   integration tests are skipped (unit only) so CI stays useful on forks.
 name: CI
 
@@ -12,13 +15,17 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ci:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
       DATABASE_TEST_URL: ${{ secrets.DATABASE_TEST_URL }}
-      # Unit tests never open a connection, but env-server.ts validates the
+      # Unit tests never open a connection, but the env module validates the
       # var at import (z.string().min(1)) — so the unit-only path (secret
       # unset) still needs a syntactically-present placeholder.
       DATABASE_URL: ${{ secrets.DATABASE_TEST_URL || 'postgresql://ci:placeholder@localhost:5432/unit-only' }}
@@ -40,25 +47,27 @@ jobs:
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
           restore-keys: bun-${{ runner.os }}-
 
-      # Next.js incremental build cache (the "No build cache found" warning).
-      # Keyed on lockfile + source hash per nextjs.org/docs/messages/no-cache;
-      # restore-keys lets a source-only change reuse the previous cache.
-      - name: Cache Next.js build
+      # Framework incremental build cache (e.g. Next.js's "No build cache
+      # found" warning). Keyed on lockfile + source hash; restore-keys let a
+      # source-only change reuse the previous cache.
+      - name: Cache framework build
         uses: actions/cache@v6
         with:
           path: .next/cache
-          key: nextjs-${{ runner.os }}-${{ hashFiles('bun.lock') }}-${{ hashFiles('src/**/*.ts', 'src/**/*.tsx') }}
+          key: build-${{ runner.os }}-${{ hashFiles('bun.lock') }}-${{ hashFiles('src/**/*.ts', 'src/**/*.tsx') }}
           restore-keys: |
-            nextjs-${{ runner.os }}-${{ hashFiles('bun.lock') }}-
-            nextjs-${{ runner.os }}-
+            build-${{ runner.os }}-${{ hashFiles('bun.lock') }}-
+            build-${{ runner.os }}-
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Lint (oxlint --type-aware + oxfmt --check + ADR-0012)
+      # The four gates, same as the ship ritual runs locally — in the same
+      # order, so a CI failure maps onto a command you can re-run.
+      - name: Lint
         run: bun run lint
 
-      - name: Type-check (tsc 7)
+      - name: Type-check
         run: bunx tsc --noEmit
 
       - name: Tests
@@ -67,7 +76,7 @@ jobs:
             bun run test:coverage
           else
             echo "::warning::DATABASE_TEST_URL not set — running unit tests only (integration skipped)"
-            bunx vitest run --project unit
+            bun run test:unit   # adapt: whatever selects the unit project
           fi
 
       - name: Build

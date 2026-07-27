@@ -1,6 +1,6 @@
 ---
 name: ship-review
-description: Pre-PR shipping ritual — gates, risk-tiering, adversarial self-review of the diff, then a PR body with findings + real test output, CI watched to green, and a fresh-context QA subagent per tier. Run before opening ANY PR from a ticket; also invocable as /ship-review.
+description: Pre-PR shipping ritual — gates, risk-tiering, adversarial self-review of the diff, then a PR body with findings + real test output, CI watched to green, a fresh-context QA subagent per tier, and a console summary. Run before opening ANY PR from a ticket; also invocable as /ship-review.
 ---
 
 <!-- Seeded from @vinhnnn/dev-workflow templates/pipeline/ — adapt the
@@ -85,3 +85,11 @@ diff review, plus a browser pass when UI changed; **high** — must exercise
 the feature in the running app.
 
 Do not self-approve or merge — **merge stays human**.
+
+## 7. Console summary
+
+Close the ritual by running `bun run summary` (the `work-summary.ts`
+companion) and letting its block be the last thing on the console — branch
+state, commits ahead, open PRs with check badges, newest `done.md` entry,
+latest session cost. A human glancing at a terminal then sees what happened
+without opening a browser or a file.

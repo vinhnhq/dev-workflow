@@ -1,14 +1,13 @@
 {
   "name": "@vinhnnn/dev-workflow",
-  "version": "2.2.0",
-  "description": "Drops a single dev-workflow.md into your project. Claude Code reads it, asks the project-specific questions, and scaffolds from there. No multi-file template.",
+  "version": "2.3.0",
+  "description": "Drops dev-workflow.md (conventions) + a dev-workflow-pipeline/ staging folder into your project. Claude Code reads them, asks the project-specific questions, and scaffolds from there.",
   "type": "module",
   "bin": {
     "dev-workflow": "./bin.mjs"
   },
   "files": [
     "bin.mjs",
-    "src",
     "templates",
     "README.md",
     "LICENSE"
