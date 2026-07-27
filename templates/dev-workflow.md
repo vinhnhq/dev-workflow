@@ -19,7 +19,12 @@ When the user says **"set up the project"**, **"init"**, or similar (or asks Cla
 1. **Confirm the stack defaults below apply** with one yes/no question, not item-by-item.
 2. **Ask only the project-specific questions** in the next section.
 3. **Scaffold the chosen layout** in thin steps — don't pre-build folders or files the project doesn't need yet.
-4. **Don't re-discuss the defaulted items.** They're listed so we skip them.
+4. **Materialize the pipeline from the package's `templates/pipeline/`** (battle-tested files, seeded then owned — adapt the bracketed placeholders, then commit):
+   - `ship-review-SKILL.md` → `.claude/skills/ship-review/SKILL.md`
+   - `session-log-upsert.ts` → `.claude/scripts/session-log-upsert.ts`
+   - `claude-settings.json` → merge into `.claude/settings.json` (project-scoped SessionEnd hook)
+   - `ci.yml` → `.github/workflows/ci.yml` (adjust gates/secrets to the project)
+5. **Don't re-discuss the defaulted items.** They're listed so we skip them.
 
 ### Project-specific questions to ask
 
