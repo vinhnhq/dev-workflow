@@ -1,8 +1,18 @@
 # Per-project toolchain pin (mise — https://mise.jdx.dev).
-# `mise install` fetches it; CI reads this same file via jdx/mise-action, so
-# laptops and runners can't drift. Pinned exact rather than floating on "24":
-# the publish job's npm floor is version-sensitive (trusted publishing needs
-# npm >= 11.5.1, and npm 12 needs node >= 24.15), so an exact node makes the
-# bundled npm exact too. Bump deliberately with `mise up`.
+# `mise install` fetches these; CI reads this same file via jdx/mise-action,
+# so laptops and runners can't drift.
+#
+# node: pinned exact rather than floating on "24" because the publish path is
+# version-sensitive — trusted publishing needs npm >= 11.5.1, and npm 12 needs
+# node >= 24.15. An exact node makes the bundled npm exact too (24.18.0 ships
+# npm 11.16). Bump deliberately with `mise up`.
+#
+# bun: the package itself never runs bun — it is a node CLI. This pin exists
+# for templates/pipeline/*.ts, which ARE bun programs, so that the smoke tests
+# can execute them for real. Typechecking proves they compile; only running
+# them proves they work, and the one bug that ever shipped in them was a
+# runtime one. Also lets you drive them by hand:
+#   bun templates/pipeline/session-log-upsert.ts < payload.json
 [tools]
 node = "24.18.0"
+bun = "1.3.14"
