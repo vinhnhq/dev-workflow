@@ -2,9 +2,8 @@ name: CI
 
 on:
   push:
-    branches: [dev, main]
+    branches: [main]
   pull_request:
-    branches: [dev, main]
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -12,12 +11,18 @@ concurrency:
 
 jobs:
   test:
-    name: Test
+    name: Test (node ${{ matrix.node }})
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        # Both ends of the range package.json `engines` promises.
+        node: [20, 24]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: ${{ matrix.node }}
       - name: Run tests
         run: npm test
