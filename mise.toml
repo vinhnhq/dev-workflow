@@ -1,0 +1,8 @@
+# Per-project toolchain pin (mise — https://mise.jdx.dev).
+# `mise install` fetches it; CI reads this same file via jdx/mise-action, so
+# laptops and runners can't drift. Pinned exact rather than floating on "24":
+# the publish job's npm floor is version-sensitive (trusted publishing needs
+# npm >= 11.5.1, and npm 12 needs node >= 24.15), so an exact node makes the
+# bundled npm exact too. Bump deliberately with `mise up`.
+[tools]
+node = "24.18.0"

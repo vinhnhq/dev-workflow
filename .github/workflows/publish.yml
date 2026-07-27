@@ -15,31 +15,27 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v5
-      # NO registry-url here, deliberately. It makes setup-node write an
-      # .npmrc containing //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
-      # + always-auth; npm then sees token auth configured (empty, since
-      # there is no token) and never attempts the OIDC exchange — you get a
-      # bare E404 with no mention of trusted publishing anywhere in the log.
-      - uses: actions/setup-node@v5
+
+      # Installs the node pinned in mise.toml — same file the laptop reads.
+      # Deliberately NOT actions/setup-node with registry-url: that writes an
+      # .npmrc containing //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN},
+      # so npm authenticates as nobody and never attempts the OIDC exchange.
+      # The symptom is a bare E404 with no mention of OIDC in the log.
+      - uses: jdx/mise-action@v4
         with:
-          node-version: 24
+          cache: true
 
-      # Trusted publishing needs npm >= 11.5.1. Pinned to the 11 line rather
-      # than @latest: npm 12 requires node ^22.22 || ^24.15 || >=26, so
-      # @latest couples this step to whichever patch setup-node resolves —
-      # a break that would only surface on a future release. npm 11 runs on
-      # every line we support. Bump npm major and node-version together.
-      - name: Upgrade npm
-        run: |
-          npm install -g npm@^11
-          npm --version
-
+      # No npm upgrade step: node 24.18.0 bundles npm 11.16, already past the
+      # 11.5.1 that trusted publishing requires. That holds only because the
+      # node pin is exact — if mise.toml ever floats, re-check the npm floor.
       - name: Run tests
-        run: npm test
+        run: |
+          npm --version
+          npm test
 
       # No env: block. The trusted publisher (npmjs.com → package settings)
       # is configured for vinhnhq/dev-workflow + this workflow filename —
-      # renaming this file breaks the trust and the publish 404s.
+      # renaming this file breaks the trust.
       # --provenance is omitted: it is automatic under trusted publishing.
       - name: Publish
         run: npm publish --access public

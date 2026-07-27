@@ -16,10 +16,14 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+
+      # Installs the node pinned in mise.toml — one source of truth for
+      # laptops and runners, so "works on my machine" can't mean a version.
+      - uses: jdx/mise-action@v4
         with:
-          # Matches package.json `engines`. The code runs on older lines,
-          # but 20 is EOL (2026-04) and we don't promise what we don't test.
-          node-version: 24
+          cache: true
+
       - name: Run tests
-        run: npm test
+        run: |
+          node --version
+          npm test
