@@ -15,17 +15,23 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v5
+      # NO registry-url here, deliberately. It makes setup-node write an
+      # .npmrc containing //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
+      # + always-auth; npm then sees token auth configured (empty, since
+      # there is no token) and never attempts the OIDC exchange — you get a
+      # bare E404 with no mention of trusted publishing anywhere in the log.
       - uses: actions/setup-node@v5
         with:
           node-version: 20
-          registry-url: "https://registry.npmjs.org"
 
       # Trusted publishing needs npm >= 11.5.1; node 20 ships npm 10.x.
       # Pinned to the 11 line deliberately: npm@latest is 12, which requires
       # node ^22.22 || ^24.15 || >=26 and hard-fails EBADENGINE here. Bump
       # this and node-version together, never one alone.
       - name: Upgrade npm
-        run: npm install -g npm@^11
+        run: |
+          npm install -g npm@^11
+          npm --version
 
       - name: Run tests
         run: npm test
