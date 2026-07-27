@@ -11,7 +11,7 @@
     "target": "esnext",
     "module": "preserve",
     "moduleResolution": "bundler",
-    "types": ["bun"],
+    "types": ["node"],
     "strict": true,
     "noEmit": true,
     "skipLibCheck": true,

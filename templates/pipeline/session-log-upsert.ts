@@ -26,6 +26,32 @@ import { createInterface } from "node:readline";
 
 const MARKER = "<!-- claude-session-log -->";
 
+/** The SessionEnd payload Claude Code writes to this hook's stdin. */
+type HookPayload = {
+  transcript_path?: string;
+  cwd?: string;
+  session_id?: string;
+};
+
+/**
+ * One JSONL line of a transcript. Every field is optional on purpose: these
+ * are append-only logs written by a moving target, and a shape change must
+ * degrade to "skip this line", never to a crash inside a SessionEnd hook.
+ */
+type TranscriptEntry = {
+  type?: string;
+  timestamp?: string;
+  message?: {
+    model?: string;
+    usage?: {
+      input_tokens?: number;
+      output_tokens?: number;
+      cache_read_input_tokens?: number;
+      cache_creation_input_tokens?: number;
+    };
+  };
+};
+
 // $/MTok: [input, output]; cache read = 0.1×in, cache write = 1.25×in.
 // Current pick 2026-07 — re-check when the vendor's price list moves.
 const PRICING: [RegExp, [number, number]][] = [
@@ -40,7 +66,11 @@ const priceFor = (model: string): [number, number] =>
 
 type Agg = { inp: number; out: number; cr: number; cw: number };
 
-const input = JSON.parse(await Bun.stdin.text());
+// readFileSync(0) rather than Bun.stdin: identical behaviour under bun and
+// node, so the script needs no Bun global and therefore no @types/bun in
+// whatever project adopts it — the types would have to coexist with that
+// project's own, and this reads one small JSON payload.
+const input = JSON.parse(readFileSync(0, "utf8")) as HookPayload;
 const transcript: string = input.transcript_path ?? "";
 const cwd: string = input.cwd ?? process.cwd();
 const fullSessionId: string = input.session_id ?? "unknown";
@@ -73,9 +103,9 @@ const scan = async (path: string, isMain: boolean): Promise<boolean> => {
   let contributed = false;
   const rl = createInterface({ input: createReadStream(path) });
   for await (const line of rl) {
-    let e: any;
+    let e: TranscriptEntry;
     try {
-      e = JSON.parse(line);
+      e = JSON.parse(line) as TranscriptEntry;
     } catch {
       continue;
     }
@@ -86,8 +116,8 @@ const scan = async (path: string, isMain: boolean): Promise<boolean> => {
       if (!first) first = e.timestamp;
       last = e.timestamp;
     }
-    const u = e?.message?.usage;
-    const model = e?.message?.model;
+    const u = e.message?.usage;
+    const model = e.message?.model;
     if (e.type !== "assistant" || !u || !model || model === "<synthetic>") continue;
     const agg = perModel.get(model) ?? { inp: 0, out: 0, cr: 0, cw: 0 };
     agg.inp += u.input_tokens ?? 0;
@@ -144,7 +174,8 @@ const author = rawAuthor.replace(/[|`\\\n]/g, "").slice(0, 24);
 const row = `| ${ended} | ${author} | \`${sessionId}\` | ${dur} | ${models} | ${fmt(tin)}/${fmt(tout)}/${fmt(tcr)} | $${cost.toFixed(2)} |`;
 
 const prView = gh("pr", "view", "--json", "number");
-const pr = prView.status === 0 ? JSON.parse(prView.stdout).number : null;
+const pr: number | null =
+  prView.status === 0 ? (JSON.parse(prView.stdout) as { number: number }).number : null;
 
 const header = [
   MARKER,
@@ -230,7 +261,9 @@ const comments = gh(
   "--jq",
   `[.[] | select(.body | startswith("${MARKER}"))][0] | {id, body}`,
 );
-const existing = comments.stdout.trim() ? JSON.parse(comments.stdout) : null;
+const existing = comments.stdout.trim()
+  ? (JSON.parse(comments.stdout) as { id: number; body: string } | null)
+  : null;
 
 const body = upsertTable(existing?.body ?? null);
 
