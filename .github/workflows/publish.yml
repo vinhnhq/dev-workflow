@@ -21,9 +21,11 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       # Trusted publishing needs npm >= 11.5.1; node 20 ships npm 10.x.
-      # Pinning node instead would trade one expiry problem for a version one.
+      # Pinned to the 11 line deliberately: npm@latest is 12, which requires
+      # node ^22.22 || ^24.15 || >=26 and hard-fails EBADENGINE here. Bump
+      # this and node-version together, never one alone.
       - name: Upgrade npm
-        run: npm install -g npm@latest
+        run: npm install -g npm@^11
 
       - name: Run tests
         run: npm test
