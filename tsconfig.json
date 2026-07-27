@@ -1,0 +1,22 @@
+{
+  // Scoped to templates/pipeline/ on purpose. The package itself is plain
+  // ESM JavaScript (bin.mjs + node:test) and needs no compiler; these .ts
+  // files are payload — copied verbatim into consumer projects and run there
+  // by Bun. They had never been typechecked in any repo, which is how a
+  // formatter-corruption bug reached the session-log script. This gate is
+  // the only thing standing between a typo and every project seeded after it.
+  //
+  // Never emits: tsc --noEmit only. The templates ship as source.
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "types": ["bun"],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true
+  },
+  "include": ["templates/pipeline/*.ts"]
+}

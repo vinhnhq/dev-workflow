@@ -28,7 +28,12 @@ jobs:
       # No npm upgrade step: node 24.18.0 bundles npm 11.16, already past the
       # 11.5.1 that trusted publishing requires. That holds only because the
       # node pin is exact — if mise.toml ever floats, re-check the npm floor.
-      - name: Run tests
+      - name: Install dependencies
+        run: npm ci
+
+      # `npm test` lints first (pretest hook), so a type error in the
+      # templates blocks the publish — they are the package's real payload.
+      - name: Lint + test
         run: |
           npm --version
           npm test
