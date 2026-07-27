@@ -2,7 +2,7 @@
 
 > Personal conventions for Vinh's projects. Read this when starting or working on one of his projects with Claude Code.
 
-This file is the **only** thing the `@vinhnnn/dev-workflow` package installs. Everything else (folder structure, package.json, configs) is scaffolded by Claude after a short conversation — not by a templated drop.
+The `@vinhnnn/dev-workflow` package installs two things: **this file** (the conventions) and **`dev-workflow-pipeline/`** (a staging folder of battle-tested agent-pipeline files to adapt and move into place, then delete). Everything else — folder structure, package manifest, configs — is scaffolded by Claude after a short conversation, not by a templated drop.
 
 ## Seeded, then owned (the shadcn model)
 
@@ -19,11 +19,14 @@ When the user says **"set up the project"**, **"init"**, or similar (or asks Cla
 1. **Confirm the stack defaults below apply** with one yes/no question, not item-by-item.
 2. **Ask only the project-specific questions** in the next section.
 3. **Scaffold the chosen layout** in thin steps — don't pre-build folders or files the project doesn't need yet.
-4. **Materialize the pipeline from the package's `templates/pipeline/`** (battle-tested files, seeded then owned — adapt the bracketed placeholders, then commit):
+4. **Materialize the pipeline from `dev-workflow-pipeline/`** — the staging folder the CLI dropped next to this file (battle-tested, seeded then owned: adapt the `[bracketed]` placeholders to this project, then commit):
    - `ship-review-SKILL.md` → `.claude/skills/ship-review/SKILL.md`
    - `session-log-upsert.ts` → `.claude/scripts/session-log-upsert.ts`
+   - `work-summary.ts` → `.claude/scripts/work-summary.ts` (+ a `summary` script in the package manifest)
    - `claude-settings.json` → merge into `.claude/settings.json` (project-scoped SessionEnd hook)
    - `ci.yml` → `.github/workflows/ci.yml` (adjust gates/secrets to the project)
+
+   Then **delete `dev-workflow-pipeline/`** — it's a delivery mechanism, not a permanent folder. If it isn't present (`--no-pipeline`, or a seed copied by hand), skip this step and build the pipeline as the project needs it.
 5. **Don't re-discuss the defaulted items.** They're listed so we skip them.
 
 ### Project-specific questions to ask
@@ -124,6 +127,8 @@ If a project genuinely needs a different stack (Python API, Go service, React Na
 
 When Claude is helping set the project up, propose enabling these. Skip any the user declines — they're starters, not requirements. All come from public Anthropic / Vercel / community sources.
 
+**Current picks as of 2026-07 — this whole section is the most fossilization-prone part of the file.** Names, ownership, and bundling of third-party skills change faster than anything else here. The durable part is the *buckets* (web quality · framework build-time · design · deploy) and the rule that you audit against the [Quality bar](#quality-bar) before shipping a milestone; the specific rows are a snapshot. Before quoting one, check it still exists — don't fabricate a skill or a CLI command that Claude Code doesn't currently provide.
+
 ### Plugins (enable both)
 
 | Plugin                                     | Why                                                                                                                                                                                            |
@@ -148,7 +153,7 @@ Run before shipping a milestone. Lighthouse + skill output should both clear the
 
 | Skill                              | When to use                                                                                                          |
 |------------------------------------|----------------------------------------------------------------------------------------------------------------------|
-| `vercel-react-best-practices`      | React 19 / Next 15 performance patterns from Vercel Engineering. Apply when writing or refactoring components.       |
+| `vercel-react-best-practices`      | React 19 / Next.js performance patterns from Vercel Engineering. Apply when writing or refactoring components.       |
 | `vercel-composition-patterns`      | Compound components, render props, context — when designing reusable component APIs.                                 |
 | `vercel-react-view-transitions`    | Implementation guide for `<ViewTransition>`, `addTransitionType`, route transitions. Required reading when wiring screen / state animations described in [React 19 features in use](#react-19-features-in-use). |
 
@@ -271,7 +276,7 @@ These are **defaults**, not laws — override per-project if a feature requires 
 - `lib/` line coverage ≥ 90%.
 - One Playwright smoke test per shipped mode.
 - Lighthouse on the main screen: Performance ≥ 90, Accessibility ≥ 95.
-- The four gates green before any task moves to `done`: `bun run lint` · `bunx tsc --noEmit` · `bun run test:coverage` · `bun run build`.
+- **The four gates** — this line is their sole owner; everything else points here. Green before any task moves to `done`: `bun run lint` · `bunx tsc --noEmit` · `bun run test:coverage` · `bun run build`. (Note `bun run test`, never bare `bun test` — see the [Test layering](#test-layering) footgun.) **Never weaken a gate to pass it**: no threshold lowering, no rule disabling, no test deletion without saying so in the PR body.
 - **CI runs the same gates on every PR** (GitHub Actions): pin the toolchain from `mise.toml` (`mise-action`), degrade gracefully when secrets are absent (unit-only + a warning, with a syntactically-valid placeholder for env vars validated at import), keep actions on current majors (node24 runtimes), cache the package store + framework build cache. Local gates run against the **working tree**; CI runs against the **commit** — a deliberately-unstaged file passes locally and fails CI.
 
 ---
@@ -296,28 +301,17 @@ Implement one task at a time, vertical slices. Failing test first, then implemen
 
 ### 4. Test
 
-Before a task moves to `done.md`, all three must pass:
-
-```bash
-bun test
-bun lint
-bunx tsc --noEmit
-```
+Before a task moves to `done.md`, **the four gates** ([Quality bar](#quality-bar), the sole owner of that list) must pass. Every task, not just the last one before a PR.
 
 ### 5. Review — the ship ritual
 
-Before opening ANY PR, run the ritual **unprompted** (project this into a `.claude/skills/ship-review` skill on richer projects):
+Before opening ANY PR, run the ritual **unprompted**. It lives in one place — `.claude/skills/ship-review/SKILL.md`, materialized from `dev-workflow-pipeline/` at init — and that skill is the sole owner of its steps. In outline: gates → risk-tier the diff → adversarial self-review → PR body contract → CI watched to green → fresh-context QA subagent → console summary.
 
-1. **Gates** (the four above). Never weaken a gate to pass it.
-2. **Risk-tier the diff**: low (docs/config/deps) · medium (feature code) · **high** (money, auth, schemas + migrations, security headers) — the tier decides review depth, and only high-tier diffs interrupt the human pre-merge.
-3. **Adversarial self-review** — read the **test changes harder than the code** (agents weaken assertions to match behavior); check the project's recorded bug classes; scope-check the diff against the ticket.
-4. **PR body contract**: intent · risk tier · findings (fixed vs deferred) · **pasted real test output** · any gate/config changes called out loudly.
-5. **A PR is not "opened" until CI is green** — `gh pr checks --watch` after creating it; fix forward on failure, never leave a red check for the human to discover.
-6. **Fresh-context QA pass** (agent-assisted projects): spawn a subagent in an isolated worktree that never saw the implementation reasoning — it checks out the PR head detached, re-runs gates itself, reviews the diff (high tier: exercises the feature in the running app), and posts its findings as a PR review comment with confidence + severity per finding. Report everything; the merge step filters.
+Two properties matter more than the steps, and are why the ritual is a skill rather than a habit: **only high-tier diffs (money, auth, schemas + migrations, security) interrupt the human pre-merge**, and **the reviewer of a diff must be a context that never wrote it** — hence the subagent in an isolated worktree, which re-runs the gates itself instead of trusting the PR body.
 
 ### 6. Release
 
-PR-based, never auto-merge. **The merge is a deliberate human click** — an agent can't be paged and can't be held responsible. Squash-merge feature PRs to `main`; tagging on `main` triggers any publish workflow you have wired up.
+PR-based, never auto-merge. **The merge is a deliberate human click** — an agent can't be paged and can't be held responsible. Mechanics (squash, stacks, restacking) are owned by [Conventions → Branch model](#conventions); tagging on `main` triggers any publish workflow you have wired up.
 
 ---
 
@@ -339,7 +333,12 @@ Moving a task: cut the line from `backlog.md`, paste at the **top** of `done.md`
 
 ### Session-cost telemetry (agent-assisted projects, optional)
 
-A `SessionEnd` hook that parses the session transcript (per-model tokens, duration, est. API-rate cost, `git user.name` as author) and **upserts** one row per session into the branch's PR comment + a section in `done.md`. Answers "what has this ticket cost so far" per author, survives machine switches, and ships with the repo (checked-in hook + script) so every teammate gets it on clone.
+A `SessionEnd` hook that parses the session transcript (per-model tokens, duration, est. API-rate cost, `git user.name` as author) and **upserts** one row per session into the branch's PR comment + a section in `done.md`. Answers "what has this ticket cost so far" per author, survives machine switches, and ships with the repo (checked-in hook + script) so every teammate gets it on clone. Two lessons, both baked into `session-log-upsert.ts`:
+
+- **Count the subagents.** Agent transcripts live outside the main one (`tasks/<id>.output` under the session's tmp dir). Skip them and every session that ran a QA subagent under-reports — which, with the ship ritual, is most of them.
+- **A hook that runs unattended must repair its own output.** Rebuild the whole section from the surviving data rows on each write, and keep a blank line between the table and any trailing total, or the repo's markdown formatter will fold that total back in as a phantom row and it will compound silently.
+
+The console companion (`work-summary.ts` → `bun run summary`) is the same data for a human in a terminal: branch state, commits ahead, open PRs with check badges, newest `done.md` entry, latest session cost. It closes the ship ritual.
 
 ---
 
@@ -352,6 +351,8 @@ The seed works on existing codebases, but the order inverts: **audit before gate
 3. **Gates at the achievable baseline, then ratchet.** Day one CI = build + format-check only (format the whole repo once, own the churn). Then tighten one notch at a time — lint rules promoted from warn→error as counts hit zero, coverage threshold set at *current* coverage and raised with each version, type-aware rules last. A gate the repo can't pass teaches everyone to ignore CI; a ratchet that only moves forward teaches the repo to heal. **Never lower a ratchet.**
 4. **Then the normal loop applies**: spec the first version, TDD-ordered backlog, ship ritual, QA subagent, write-once docs — new work meets the full bar immediately; legacy code meets it as it gets touched.
 5. **Refactor legacy toward the target per-subsystem** (strangler fig, vertical slices): pick the subsystem with the most concrete pain, refactor it end-to-end behind its existing interface, ship it through the ritual, repeat. Calibrate to actual pain, not aesthetics — if you can't name the pain a refactor removes, skip it. Big-bang rewrites are a separate product decision, not a refactor.
+
+---
 
 ## When NOT to follow this protocol
 
