@@ -4,6 +4,12 @@
 
 This file is the **only** thing the `@vinhnnn/dev-workflow` package installs. Everything else (folder structure, package.json, configs) is scaffolded by Claude after a short conversation — not by a templated drop.
 
+## Seeded, then owned (the shadcn model)
+
+This file is a **seed, not a synced dependency**. It is dropped once at project init; from that moment **the project's copy is the truth** — edit it freely, let it diverge, never re-drop it over local changes. On init, stamp a provenance line under the title: `_Seeded from @vinhnnn/dev-workflow vX.Y.Z on YYYY-MM-DD; owned by this repo since._`
+
+**Backflow:** at each version-close retro, ask "which of this version's process lessons generalize?" and PR them to the `dev-workflow` repo. The foundation evolves downstream of practice, not upstream of it. Prescriptions here favor **principles over named tools** — named tools fossilize (a "current pick" line dates each one).
+
 ---
 
 ## Claude init protocol
@@ -13,7 +19,12 @@ When the user says **"set up the project"**, **"init"**, or similar (or asks Cla
 1. **Confirm the stack defaults below apply** with one yes/no question, not item-by-item.
 2. **Ask only the project-specific questions** in the next section.
 3. **Scaffold the chosen layout** in thin steps — don't pre-build folders or files the project doesn't need yet.
-4. **Don't re-discuss the defaulted items.** They're listed so we skip them.
+4. **Materialize the pipeline from the package's `templates/pipeline/`** (battle-tested files, seeded then owned — adapt the bracketed placeholders, then commit):
+   - `ship-review-SKILL.md` → `.claude/skills/ship-review/SKILL.md`
+   - `session-log-upsert.ts` → `.claude/scripts/session-log-upsert.ts`
+   - `claude-settings.json` → merge into `.claude/settings.json` (project-scoped SessionEnd hook)
+   - `ci.yml` → `.github/workflows/ci.yml` (adjust gates/secrets to the project)
+5. **Don't re-discuss the defaulted items.** They're listed so we skip them.
 
 ### Project-specific questions to ask
 
@@ -94,12 +105,14 @@ If the request is outcome-only, ask for the how before writing anything.
 
 ## Stack defaults
 
-- **Next.js 15** App Router, `src/` layout
-- **React 19** — `<Activity>` and `<ViewTransition>` first-class
-- **TypeScript** strict, no `any`, no `as` outside one isolated adapter
-- **Tailwind v4** + **shadcn/ui** (commit primitives to `src/lib/ui/`, edit in place, never wrap)
-- **Bun** for everything — package manager, runtime, test runner
-- **Biome** for lint + format (no ESLint, no Prettier)
+- **Next.js 16** App Router, `src/` layout (middleware is `src/proxy.ts` exporting `proxy`)
+- **React 19** — `<Activity>` and `<ViewTransition>` first-class; React Compiler on (handwritten `useMemo`/`useCallback` usually redundant)
+- **TypeScript** strict, no `any`, no `as` outside one isolated adapter. Type-check with the **native compiler** (TS 7 `tsc --noEmit` — seconds, not minutes; editors use the native LSP; frameworks may need a CLI-checker flag — current pick 2026-07: Next's `experimental.useTypeScriptCli`)
+- **Tailwind v4** + **shadcn/ui** (commit primitives to `src/components/ui/`, edit in place, never wrap)
+- **Bun** as package manager + script runner (test runner is per-project — see Test layering)
+- **Lint + format**: one native, type-aware toolchain; promise-leak rules (`no-floating-promises` class) are **blocking errors**, and the formatter covers markdown too (current pick 2026-07: `oxlint --type-aware` + `oxfmt`)
+- **Toolchain pinning**: `mise.toml` pins bun/node — laptops and CI read the same file (CI via `mise-action`)
+- **Git defaults**: `rebase.updateRefs` + `rerere.enabled` global; stacked PRs via git-spice (auto-retargets dependents after squash-merges)
 - **ts-pattern** — exhaustive `match()` for state transitions
 - **purify-ts** — `Maybe` / `Either` for partial functions; no `throw` in `lib/`
 
@@ -171,7 +184,7 @@ Plugins are toggled in `.claude/settings.json` (`enabledPlugins`). Skills are pi
 
 These are non-negotiable; they keep logic testable and portable.
 
-1. **Pure boundary at `src/lib/`** — no `react`, `next/*`, DOM globals, `fetch`, or `Date.now()`. Time and randomness flow as parameters (`now: number`, `rng: () => number`). Enforce with Biome `noRestrictedImports` against `src/lib/**`.
+1. **Pure boundary at `src/lib/`** — no `react`, `next/*`, DOM globals, `fetch`, or `Date.now()`. Time and randomness flow as parameters (`now: number`, `rng: () => number`). Enforce with a restricted-imports lint rule against `src/lib/**`.
 2. **Functional error types, not exceptions.** Anything that can fail returns `Either<Err, Ok>`. Anything that can be absent returns `Maybe<T>`. No `throw` in `lib/`. UI unwraps with `.caseOf({ Just, Nothing })` / `.caseOf({ Left, Right })` — never `.unsafeCoerce()`.
 3. **State transitions through `ts-pattern`.** Reducers use `match([state, event]).with(...).exhaustive()`. Adding a new state or event without handling it fails the type check.
 4. **No `any`, no `as`** outside one isolated adapter helper for purify-ts ↔ external libraries.
@@ -184,8 +197,9 @@ These are non-negotiable; they keep logic testable and portable.
 ```
 src/
   app/           # Next App Router routes + UI
-  lib/           # pure logic — no React, no DOM
+  components/
     ui/          # shadcn primitives
+  lib/           # pure logic — no React, no DOM
   hooks/         # React glue
 __project__/     # docs, specs, tasks (never imported)
 e2e/             # Playwright smoke tests
@@ -216,7 +230,8 @@ If none of those apply, three files is enough. Resist the urge to pre-build stru
 - **Imports** — absolute via `@/`, no deep relative paths.
 - **Tests** — co-located in `__tests__/` next to source.
 - **Commits** — Conventional Commits, atomic, one semantic type per commit (`feat:`, `fix:`, `docs:`, `test:`, `chore:`). Small, never amend.
-- **Branch model** — `dev` is trunk; `main` is release-only. Daily commits land on `dev`. `main` only moves when a release PR merges.
+- **Branch model** — `main` is trunk. Feature branches → PR → squash-merge to `main`. Large features ship as a **stack** of small PRs (git-spice restacks + retargets after each squash-merge; never delete a mid-stack branch — GitHub auto-closes its dependent PR unrecoverably).
+- **Long autonomous runs** — commit at every green checkpoint (gates pass → commit). Agent context compaction is lossy; artifacts are not. A fresh session restores from `git log` + backlog + memory, never from conversational recall.
 
 ---
 
@@ -230,13 +245,13 @@ If none of those apply, three files is enough. Resist the urge to pre-build stru
 
 ## Test layering
 
-| Layer            | Tool                                                | Where                    | Command     |
-|------------------|-----------------------------------------------------|--------------------------|-------------|
-| Unit / property  | `bun test` (built-in)                               | `src/lib/**/__tests__/`  | `bun test`  |
-| Component        | `bun test` + `happy-dom` + `@testing-library/react` | `src/**/__tests__/`      | `bun test`  |
-| E2E smoke        | Playwright                                          | `e2e/`                   | `bun e2e`   |
+| Layer            | Tool                                                   | Where                    | Command                    |
+|------------------|--------------------------------------------------------|--------------------------|----------------------------|
+| Unit / property  | Vitest (current pick; `bun test` fine for tiny libs)   | `src/tests/unit/`        | `bun run test`             |
+| Integration      | Vitest project against a test DB branch                | `src/tests/integration/` | `bun run test:integration` |
+| E2E smoke        | Playwright — **UI-driven like a real customer**, no API cheats | `e2e/`            | `bun run test:e2e`         |
 
-`bun test` is a built-in subcommand, not an npm script. Add only `"e2e": "playwright test"` to `package.json`.
+**Footgun:** when Vitest is the runner, bare `bun test` invokes Bun's *built-in* runner and finds zero files — always `bun run test`. The coverage-thresholded script (`test:coverage`) is the **real** gate; a bare `test` script that skips thresholds can go green locally and fail CI.
 
 ---
 
@@ -256,7 +271,8 @@ These are **defaults**, not laws — override per-project if a feature requires 
 - `lib/` line coverage ≥ 90%.
 - One Playwright smoke test per shipped mode.
 - Lighthouse on the main screen: Performance ≥ 90, Accessibility ≥ 95.
-- `bun test`, `bun lint`, `bunx tsc --noEmit` all green before any task moves to `done`.
+- The four gates green before any task moves to `done`: `bun run lint` · `bunx tsc --noEmit` · `bun run test:coverage` · `bun run build`.
+- **CI runs the same gates on every PR** (GitHub Actions): pin the toolchain from `mise.toml` (`mise-action`), degrade gracefully when secrets are absent (unit-only + a warning, with a syntactically-valid placeholder for env vars validated at import), keep actions on current majors (node24 runtimes), cache the package store + framework build cache. Local gates run against the **working tree**; CI runs against the **commit** — a deliberately-unstaged file passes locally and fails CI.
 
 ---
 
@@ -288,36 +304,54 @@ bun lint
 bunx tsc --noEmit
 ```
 
-### 5. Review
+### 5. Review — the ship ritual
 
-Five-axis review before merging to `main` — correctness, readability, architecture, security, performance. For solo work, do this against your own diff before opening the release PR.
+Before opening ANY PR, run the ritual **unprompted** (project this into a `.claude/skills/ship-review` skill on richer projects):
+
+1. **Gates** (the four above). Never weaken a gate to pass it.
+2. **Risk-tier the diff**: low (docs/config/deps) · medium (feature code) · **high** (money, auth, schemas + migrations, security headers) — the tier decides review depth, and only high-tier diffs interrupt the human pre-merge.
+3. **Adversarial self-review** — read the **test changes harder than the code** (agents weaken assertions to match behavior); check the project's recorded bug classes; scope-check the diff against the ticket.
+4. **PR body contract**: intent · risk tier · findings (fixed vs deferred) · **pasted real test output** · any gate/config changes called out loudly.
+5. **A PR is not "opened" until CI is green** — `gh pr checks --watch` after creating it; fix forward on failure, never leave a red check for the human to discover.
+6. **Fresh-context QA pass** (agent-assisted projects): spawn a subagent in an isolated worktree that never saw the implementation reasoning — it checks out the PR head detached, re-runs gates itself, reviews the diff (high tier: exercises the feature in the running app), and posts its findings as a PR review comment with confidence + severity per finding. Report everything; the merge step filters.
 
 ### 6. Release
 
-PR-based, never auto-merge.
-
-```bash
-# from dev branch with a clean working tree:
-gh pr create --base main --head dev --title "Release vX.Y.Z"
-```
-
-The merge is a deliberate human click on GitHub. Tagging on `main` triggers any `npm publish` workflow you have wired up. If you don't have one, push the tag and call it done.
+PR-based, never auto-merge. **The merge is a deliberate human click** — an agent can't be paged and can't be held responsible. Squash-merge feature PRs to `main`; tagging on `main` triggers any publish workflow you have wired up.
 
 ---
 
-## Move tasks from backlog to done
+## Docs write-once — one owner per fact
 
-When a task is finished and all gates green:
+Every kind of knowledge has exactly ONE owning file; everything else points. Duplicated status is the #1 docs disease in long-running agent projects: the same ship-story ends up in 4–5 files and the copies start disagreeing.
 
-1. Cut the line from `__project__/backlog.md`.
-2. Paste at the **top** of `__project__/done.md` with the date and commit SHA:
-   ```
-   - 2026-05-08 · `abc1234` · 1.2 findPath: same-row, same-column, one-turn cases
-   ```
+| Knowledge | Sole owner |
+|---|---|
+| Ship facts (PR/SHA/gates/features) | `done.md` — one dated entry per PR, ≤ ~10 lines |
+| Open work | `backlog.md` — open items ONLY; shipping = **move** to done, never keep-and-tick |
+| Lessons | `retro.md` — lessons only; no ship-narrative recap |
+| Current state | ONE dated block in the orientation doc — never a growing status trail |
+| Decision status | each ADR's own `Status:` line + one index file |
+| Stack | the package manifest |
+| Specs | frozen at intent — **never** add "as-built" sections post-ship |
 
-Newest at top. No further structure unless `done.md` exceeds ~200 lines, then partition by year or version.
+Moving a task: cut the line from `backlog.md`, paste at the **top** of `done.md` with date + SHA (`- 2026-05-08 · \`abc1234\` · 1.2 findPath: …`). Newest at top; partition once `done.md` exceeds ~300 lines.
+
+### Session-cost telemetry (agent-assisted projects, optional)
+
+A `SessionEnd` hook that parses the session transcript (per-model tokens, duration, est. API-rate cost, `git user.name` as author) and **upserts** one row per session into the branch's PR comment + a section in `done.md`. Answers "what has this ticket cost so far" per author, survives machine switches, and ships with the repo (checked-in hook + script) so every teammate gets it on clone.
 
 ---
+
+## Brownfield adoption — installing this into a legacy project
+
+The seed works on existing codebases, but the order inverts: **audit before gates, ratchet instead of block.**
+
+1. **Seed + materialize the pipeline** as in the init protocol — but do NOT enable blocking gates yet.
+2. **Baseline audit first** (agent fan-out): map the system (routes, data flows, deps), find the perf/security hotspots with `file:line` evidence, and record the landmines. Output = a handoff pack under `__project__/reference/` + a CLAUDE.md whose gotchas section is written from findings, not aspirations.
+3. **Gates at the achievable baseline, then ratchet.** Day one CI = build + format-check only (format the whole repo once, own the churn). Then tighten one notch at a time — lint rules promoted from warn→error as counts hit zero, coverage threshold set at *current* coverage and raised with each version, type-aware rules last. A gate the repo can't pass teaches everyone to ignore CI; a ratchet that only moves forward teaches the repo to heal. **Never lower a ratchet.**
+4. **Then the normal loop applies**: spec the first version, TDD-ordered backlog, ship ritual, QA subagent, write-once docs — new work meets the full bar immediately; legacy code meets it as it gets touched.
+5. **Refactor legacy toward the target per-subsystem** (strangler fig, vertical slices): pick the subsystem with the most concrete pain, refactor it end-to-end behind its existing interface, ship it through the ritual, repeat. Calibrate to actual pain, not aesthetics — if you can't name the pain a refactor removes, skip it. Big-bang rewrites are a separate product decision, not a refactor.
 
 ## When NOT to follow this protocol
 
