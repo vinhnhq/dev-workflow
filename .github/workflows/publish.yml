@@ -22,12 +22,13 @@ jobs:
       # bare E404 with no mention of trusted publishing anywhere in the log.
       - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
 
-      # Trusted publishing needs npm >= 11.5.1; node 20 ships npm 10.x.
-      # Pinned to the 11 line deliberately: npm@latest is 12, which requires
-      # node ^22.22 || ^24.15 || >=26 and hard-fails EBADENGINE here. Bump
-      # this and node-version together, never one alone.
+      # Trusted publishing needs npm >= 11.5.1. Pinned to the 11 line rather
+      # than @latest: npm 12 requires node ^22.22 || ^24.15 || >=26, so
+      # @latest couples this step to whichever patch setup-node resolves —
+      # a break that would only surface on a future release. npm 11 runs on
+      # every line we support. Bump npm major and node-version together.
       - name: Upgrade npm
         run: |
           npm install -g npm@^11

@@ -11,18 +11,15 @@ concurrency:
 
 jobs:
   test:
-    name: Test (node ${{ matrix.node }})
+    name: Test
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    strategy:
-      fail-fast: false
-      matrix:
-        # Both ends of the range package.json `engines` promises.
-        node: [20, 24]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
-          node-version: ${{ matrix.node }}
+          # Matches package.json `engines`. The code runs on older lines,
+          # but 20 is EOL (2026-04) and we don't promise what we don't test.
+          node-version: 24
       - name: Run tests
         run: npm test
