@@ -1,6 +1,6 @@
 {
   "name": "@vinhnnn/dev-workflow",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "description": "Drops dev-workflow.md (conventions) + a dev-workflow-pipeline/ staging folder into your project. Claude Code reads them, asks the project-specific questions, and scaffolds from there.",
   "type": "module",
   "bin": {
