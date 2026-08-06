@@ -9,6 +9,8 @@ import { dirname, join, resolve } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
+import { SEEDED } from "../lib/sync.mjs";
+
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const BIN = join(REPO_ROOT, "bin.mjs");
 
@@ -212,4 +214,18 @@ test("an id that disagrees with its kind is reported", () => {
   );
   const { out } = run(["check"], dir);
   assert.match(out, /disagrees with/);
+});
+
+test("every seeded doc starts with frontmatter at byte 0", () => {
+  // A leading comment pushes the block out of position, `check` sees no
+  // frontmatter, and the stub can never satisfy the gate it ships with —
+  // 3.0.0 shipped exactly that bug in runbook.md.
+  //
+  // Scoped to the doc root: CLAUDE.md is a rule file at the repo root that the
+  // gate never scans, and it correctly has no frontmatter.
+  for (const [from, to] of SEEDED) {
+    if (!to.endsWith(".md") || !to.startsWith("__project__/")) continue;
+    const body = readFileSync(join(REPO_ROOT, from), "utf8");
+    assert.ok(body.startsWith("---\n"), `${from} must start with frontmatter, not a comment`);
+  }
 });
