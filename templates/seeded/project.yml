@@ -1,0 +1,30 @@
+# The keystone. Read by `dev-workflow check`, by the ops console, and by the portfolio.
+#
+# SEEDED — yours to own; `sync` never overwrites this file.
+#
+# `slug` is PERMANENT. It joins this repo to its project record everywhere else,
+# so choose it once and never change it — the same rule as a doc id.
+
+slug: <kebab-case-name>
+name: <Display Name>
+tagline: <one line — what this is, for someone who has never seen it>
+status: active # active | paused | shipped | archived
+visibility: private # private | public
+
+stack: []
+
+conventions:
+  # Doc ids become `<idPrefix>-<kind>-<slug>`, e.g. `io-adr-0031`. Two or three
+  # letters. Permanent, like the project slug.
+  idPrefix: <xx>
+  docRoot: __project__
+  # Paths exempt from the frontmatter contract — vendored or read-only material
+  # you never edit. Most projects have none.
+  exempt: []
+
+links:
+  repo: ""
+  live: ""
+
+# Curated for the portfolio: what is genuinely interesting here, not a feature list.
+public_highlights: []

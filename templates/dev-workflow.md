@@ -27,6 +27,7 @@ When the user says **"set up the project"**, **"init"**, or similar (or asks Cla
    - `ci.yml` → `.github/workflows/ci.yml` (adjust gates/secrets to the project)
 
    Then **delete `dev-workflow-pipeline/`** — it's a delivery mechanism, not a permanent folder. If it isn't present (`--no-pipeline`, or a seed copied by hand), skip this step and build the pipeline as the project needs it.
+
 5. **Don't re-discuss the defaulted items.** They're listed so we skip them.
 
 ### Project-specific questions to ask
@@ -127,57 +128,57 @@ If a project genuinely needs a different stack (Python API, Go service, React Na
 
 When Claude is helping set the project up, propose enabling these. Skip any the user declines — they're starters, not requirements. All come from public Anthropic / Vercel / community sources.
 
-**Current picks as of 2026-07 — this whole section is the most fossilization-prone part of the file.** Names, ownership, and bundling of third-party skills change faster than anything else here. The durable part is the *buckets* (web quality · framework build-time · design · deploy) and the rule that you audit against the [Quality bar](#quality-bar) before shipping a milestone; the specific rows are a snapshot. Before quoting one, check it still exists — don't fabricate a skill or a CLI command that Claude Code doesn't currently provide.
+**Current picks as of 2026-07 — this whole section is the most fossilization-prone part of the file.** Names, ownership, and bundling of third-party skills change faster than anything else here. The durable part is the _buckets_ (web quality · framework build-time · design · deploy) and the rule that you audit against the [Quality bar](#quality-bar) before shipping a milestone; the specific rows are a snapshot. Before quoting one, check it still exists — don't fabricate a skill or a CLI command that Claude Code doesn't currently provide.
 
 ### Plugins (enable both)
 
-| Plugin                                     | Why                                                                                                                                                                                            |
-|--------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `agent-skills@addy-agent-skills`           | Provides the workflow skills — `spec` / `plan` / `build` / `test` / `review` / `ship` / `code-simplify` — plus debugging, security, code review, TDD, and more. Mirrors the six-phase process in this file. |
-| `frontend-design@claude-plugins-official`  | Provides the `frontend-design` skill — distinctive, production-grade UI generation that avoids the generic AI aesthetic. Valuable when scaffolding initial components and pages.               |
+| Plugin                                    | Why                                                                                                                                                                                                         |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agent-skills@addy-agent-skills`          | Provides the workflow skills — `spec` / `plan` / `build` / `test` / `review` / `ship` / `code-simplify` — plus debugging, security, code review, TDD, and more. Mirrors the six-phase process in this file. |
+| `frontend-design@claude-plugins-official` | Provides the `frontend-design` skill — distinctive, production-grade UI generation that avoids the generic AI aesthetic. Valuable when scaffolding initial components and pages.                            |
 
 ### Skill bucket — Web quality (audit time)
 
 Run before shipping a milestone. Lighthouse + skill output should both clear the [Quality bar](#quality-bar).
 
-| Skill                | When to use                                                                                                |
-|----------------------|------------------------------------------------------------------------------------------------------------|
-| `web-quality-audit`  | Comprehensive sweep covering performance, accessibility, SEO, and best practices. Run before each release. |
-| `accessibility`      | WCAG 2.2, keyboard nav, screen-reader support. Run on every shipped mode.                                  |
-| `core-web-vitals`    | LCP / INP / CLS optimization. Run when Lighthouse Performance < 90.                                        |
-| `performance`        | Load time, bundle size, image optimization. Companion to `core-web-vitals` for non-CWV bottlenecks.        |
-| `seo`                | Meta tags, structured data, sitemap. Run when the project is publicly indexable.                           |
-| `best-practices`     | Modern security, compatibility, code quality patterns. Worth a pass before each release.                   |
+| Skill               | When to use                                                                                                |
+| ------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `web-quality-audit` | Comprehensive sweep covering performance, accessibility, SEO, and best practices. Run before each release. |
+| `accessibility`     | WCAG 2.2, keyboard nav, screen-reader support. Run on every shipped mode.                                  |
+| `core-web-vitals`   | LCP / INP / CLS optimization. Run when Lighthouse Performance < 90.                                        |
+| `performance`       | Load time, bundle size, image optimization. Companion to `core-web-vitals` for non-CWV bottlenecks.        |
+| `seo`               | Meta tags, structured data, sitemap. Run when the project is publicly indexable.                           |
+| `best-practices`    | Modern security, compatibility, code quality patterns. Worth a pass before each release.                   |
 
 ### Skill bucket — React / Next.js (build time)
 
-| Skill                              | When to use                                                                                                          |
-|------------------------------------|----------------------------------------------------------------------------------------------------------------------|
-| `vercel-react-best-practices`      | React 19 / Next.js performance patterns from Vercel Engineering. Apply when writing or refactoring components.       |
-| `vercel-composition-patterns`      | Compound components, render props, context — when designing reusable component APIs.                                 |
-| `vercel-react-view-transitions`    | Implementation guide for `<ViewTransition>`, `addTransitionType`, route transitions. Required reading when wiring screen / state animations described in [React 19 features in use](#react-19-features-in-use). |
+| Skill                           | When to use                                                                                                                                                                                                     |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vercel-react-best-practices`   | React 19 / Next.js performance patterns from Vercel Engineering. Apply when writing or refactoring components.                                                                                                  |
+| `vercel-composition-patterns`   | Compound components, render props, context — when designing reusable component APIs.                                                                                                                            |
+| `vercel-react-view-transitions` | Implementation guide for `<ViewTransition>`, `addTransitionType`, route transitions. Required reading when wiring screen / state animations described in [React 19 features in use](#react-19-features-in-use). |
 
 ### Skill bucket — Design and UX
 
-| Skill                       | When to use                                                                                  |
-|-----------------------------|----------------------------------------------------------------------------------------------|
-| `web-design-guidelines`     | UI / a11y review against the Web Interface Guidelines. Run alongside `accessibility`.        |
-| `frontend-design`           | (From the `frontend-design` plugin above.) Use when generating polished initial screens.     |
+| Skill                   | When to use                                                                              |
+| ----------------------- | ---------------------------------------------------------------------------------------- |
+| `web-design-guidelines` | UI / a11y review against the Web Interface Guidelines. Run alongside `accessibility`.    |
+| `frontend-design`       | (From the `frontend-design` plugin above.) Use when generating polished initial screens. |
 
 ### Skill bucket — Deploy
 
-| Skill                       | When to use                                                                       |
-|-----------------------------|-----------------------------------------------------------------------------------|
-| `deploy-to-vercel`          | When the user says "deploy" or "push it live." Default deployment target.         |
-| `vercel-cli-with-tokens`    | Token-based Vercel deploys (CI, automation). Use when interactive login isn't viable. |
+| Skill                    | When to use                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------------- |
+| `deploy-to-vercel`       | When the user says "deploy" or "push it live." Default deployment target.             |
+| `vercel-cli-with-tokens` | Token-based Vercel deploys (CI, automation). Use when interactive login isn't viable. |
 
 ### Skill bucket — Mobile (optional)
 
 Only relevant if the project is React Native / Expo. Skip for web-only projects.
 
-| Skill                          | When to use                                            |
-|--------------------------------|--------------------------------------------------------|
-| `vercel-react-native-skills`   | RN / Expo best practices, list performance, native modules. |
+| Skill                        | When to use                                                 |
+| ---------------------------- | ----------------------------------------------------------- |
+| `vercel-react-native-skills` | RN / Expo best practices, list performance, native modules. |
 
 ### Installation
 
@@ -250,13 +251,13 @@ If none of those apply, three files is enough. Resist the urge to pre-build stru
 
 ## Test layering
 
-| Layer            | Tool                                                   | Where                    | Command                    |
-|------------------|--------------------------------------------------------|--------------------------|----------------------------|
-| Unit / property  | Vitest (current pick; `bun test` fine for tiny libs)   | `src/tests/unit/`        | `bun run test`             |
-| Integration      | Vitest project against a test DB branch                | `src/tests/integration/` | `bun run test:integration` |
-| E2E smoke        | Playwright — **UI-driven like a real customer**, no API cheats | `e2e/`            | `bun run test:e2e`         |
+| Layer           | Tool                                                           | Where                    | Command                    |
+| --------------- | -------------------------------------------------------------- | ------------------------ | -------------------------- |
+| Unit / property | Vitest (current pick; `bun test` fine for tiny libs)           | `src/tests/unit/`        | `bun run test`             |
+| Integration     | Vitest project against a test DB branch                        | `src/tests/integration/` | `bun run test:integration` |
+| E2E smoke       | Playwright — **UI-driven like a real customer**, no API cheats | `e2e/`                   | `bun run test:e2e`         |
 
-**Footgun:** when Vitest is the runner, bare `bun test` invokes Bun's *built-in* runner and finds zero files — always `bun run test`. The coverage-thresholded script (`test:coverage`) is the **real** gate; a bare `test` script that skips thresholds can go green locally and fail CI.
+**Footgun:** when Vitest is the runner, bare `bun test` invokes Bun's _built-in_ runner and finds zero files — always `bun run test`. The coverage-thresholded script (`test:coverage`) is the **real** gate; a bare `test` script that skips thresholds can go green locally and fail CI.
 
 ---
 
@@ -319,15 +320,15 @@ PR-based, never auto-merge. **The merge is a deliberate human click** — an age
 
 Every kind of knowledge has exactly ONE owning file; everything else points. Duplicated status is the #1 docs disease in long-running agent projects: the same ship-story ends up in 4–5 files and the copies start disagreeing.
 
-| Knowledge | Sole owner |
-|---|---|
-| Ship facts (PR/SHA/gates/features) | `done.md` — one dated entry per PR, ≤ ~10 lines |
-| Open work | `backlog.md` — open items ONLY; shipping = **move** to done, never keep-and-tick |
-| Lessons | `retro.md` — lessons only; no ship-narrative recap |
-| Current state | ONE dated block in the orientation doc — never a growing status trail |
-| Decision status | each ADR's own `Status:` line + one index file |
-| Stack | the package manifest |
-| Specs | frozen at intent — **never** add "as-built" sections post-ship |
+| Knowledge                          | Sole owner                                                                       |
+| ---------------------------------- | -------------------------------------------------------------------------------- |
+| Ship facts (PR/SHA/gates/features) | `done.md` — one dated entry per PR, ≤ ~10 lines                                  |
+| Open work                          | `backlog.md` — open items ONLY; shipping = **move** to done, never keep-and-tick |
+| Lessons                            | `retro.md` — lessons only; no ship-narrative recap                               |
+| Current state                      | ONE dated block in the orientation doc — never a growing status trail            |
+| Decision status                    | each ADR's own `Status:` line + one index file                                   |
+| Stack                              | the package manifest                                                             |
+| Specs                              | frozen at intent — **never** add "as-built" sections post-ship                   |
 
 Moving a task: cut the line from `backlog.md`, paste at the **top** of `done.md` with date + SHA (`- 2026-05-08 · \`abc1234\` · 1.2 findPath: …`). Newest at top; partition once `done.md` exceeds ~300 lines.
 
@@ -348,7 +349,7 @@ The seed works on existing codebases, but the order inverts: **audit before gate
 
 1. **Seed + materialize the pipeline** as in the init protocol — but do NOT enable blocking gates yet.
 2. **Baseline audit first** (agent fan-out): map the system (routes, data flows, deps), find the perf/security hotspots with `file:line` evidence, and record the landmines. Output = a handoff pack under `__project__/reference/` + a CLAUDE.md whose gotchas section is written from findings, not aspirations.
-3. **Gates at the achievable baseline, then ratchet.** Day one CI = build + format-check only (format the whole repo once, own the churn). Then tighten one notch at a time — lint rules promoted from warn→error as counts hit zero, coverage threshold set at *current* coverage and raised with each version, type-aware rules last. A gate the repo can't pass teaches everyone to ignore CI; a ratchet that only moves forward teaches the repo to heal. **Never lower a ratchet.**
+3. **Gates at the achievable baseline, then ratchet.** Day one CI = build + format-check only (format the whole repo once, own the churn). Then tighten one notch at a time — lint rules promoted from warn→error as counts hit zero, coverage threshold set at _current_ coverage and raised with each version, type-aware rules last. A gate the repo can't pass teaches everyone to ignore CI; a ratchet that only moves forward teaches the repo to heal. **Never lower a ratchet.**
 4. **Then the normal loop applies**: spec the first version, TDD-ordered backlog, ship ritual, QA subagent, write-once docs — new work meets the full bar immediately; legacy code meets it as it gets touched.
 5. **Refactor legacy toward the target per-subsystem** (strangler fig, vertical slices): pick the subsystem with the most concrete pain, refactor it end-to-end behind its existing interface, ship it through the ritual, repeat. Calibrate to actual pain, not aesthetics — if you can't name the pain a refactor removes, skip it. Big-bang rewrites are a separate product decision, not a refactor.
 

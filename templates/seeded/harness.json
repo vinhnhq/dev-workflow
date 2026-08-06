@@ -1,0 +1,35 @@
+{
+  "$comment": [
+    "SEEDED — yours to own; `sync` never overwrites this file.",
+    "",
+    "`environment` powers `dev-workflow doctor`; `guards` powers the PreToolUse hook.",
+    "",
+    "REQUIRED vs OPTIONAL is about the project, not the variable: required means nothing works",
+    "without it; optional means something DEGRADES, usually silently. The `why` on an optional",
+    "entry is the whole point — a newcomer hitting a no-op feature cannot tell 'broken' from",
+    "'unconfigured' unless someone wrote it down.",
+    "",
+    "Guards start empty on purpose. Add a rule when a real mistake happens, and trace every rule",
+    "back to the failure that caused it — a guard invented in advance blocks work nobody was",
+    "going to do. Rules match command TEXT, so a command that merely mentions a pattern is",
+    "blocked too; anchor them with ^ and expect the occasional false positive.",
+    "",
+    "Wire the hook (without it, every rule below is advisory):",
+    "  package.json  → \"scripts\": { \"guard\": \"dev-workflow guard\" }",
+    "  .claude/settings.json → PreToolUse matcher \"Bash|Edit|Write|NotebookEdit\"",
+    "                          command \"npm run --silent guard\"  (bun: \"bun run --silent guard\")"
+  ],
+
+  "environment": {
+    "required": [],
+    "optional": [],
+    "commands": ["git"],
+    "files": []
+  },
+
+  "guards": {
+    "blockedCommands": [],
+    "readOnlyPaths": [],
+    "protectedBranches": ["main"]
+  }
+}

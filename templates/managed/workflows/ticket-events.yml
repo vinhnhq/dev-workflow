@@ -1,0 +1,108 @@
+# Managed by @vinhnnn/dev-workflow — `dev-workflow sync`. Local edits are detected via
+# dev-workflow-lock.json; `--force` discards them.
+#
+# Ticket lifecycle events — derived, never typed.
+#
+# SHIPS INERT: every job is gated on the repo variable TICKET_EVENTS_ENABLED == 'true'. Merging
+# this file changes nothing until that variable is set, so it can be reviewed in place.
+#
+# WHY DERIVED: a lifecycle recorded as a byproduct of work is accurate; one that people have to
+# report is stale by Tuesday. Every event below already happens — a branch push, a PR, a review, a
+# merge. Nobody presses a button and nobody learns a workflow.
+#
+# WHY ONE FILE PER EVENT: two files with different names can never conflict in git, so a whole team
+# plus its agents push freely with zero merge resolution. A shared JSONL would conflict on its last
+# line. See .claude/templates/ticket-event.json.
+#
+# NOT HERE YET (deliberate): regenerating the backlog / done archive from events. That needs the
+# generator, which comes after the metadata backfill — events over undefined tickets record noise.
+name: Ticket events
+
+on:
+  push:
+    branches: ["wip/**"]
+  pull_request:
+    types: [opened, closed]
+  pull_request_review:
+    types: [submitted]
+
+# Serialise appends so two merges cannot race the same push. Events are the audit trail; losing one
+# to a lost update is worse than waiting twenty seconds.
+concurrency:
+  group: ticket-events
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  emit:
+    if: vars.TICKET_EVENTS_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      # Ticket id comes from the branch (wip/AB.1.2) or the PR title ([AB.1.2] …). No id means no
+      # event: an unlinked branch is not a ticket, and inventing one would corrupt the stream.
+      - name: Resolve ticket id + event type
+        id: resolve
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          case "${{ github.event_name }}" in
+            push)
+              ID="${GITHUB_REF_NAME#wip/}"; TYPE="claimed" ;;
+            pull_request)
+              ID=$(printf '%s' "$PR_TITLE" | grep -oE '^\[[A-Za-z0-9_.]+\]' | tr -d '[]' || true)
+              if [ "${{ github.event.action }}" = "opened" ]; then TYPE="pr-opened"
+              elif [ "${{ github.event.pull_request.merged }}" = "true" ]; then TYPE="shipped"
+              else TYPE="released"; fi ;;
+            pull_request_review)
+              ID=$(printf '%s' "$PR_TITLE" | grep -oE '^\[[A-Za-z0-9_.]+\]' | tr -d '[]' || true)
+              TYPE="reviewed" ;;
+          esac
+          echo "id=$ID"     >> "$GITHUB_OUTPUT"
+          echo "type=$TYPE" >> "$GITHUB_OUTPUT"
+          [ -n "$ID" ] || echo "::notice::no ticket id — skipping"
+
+      - name: Append event
+        if: steps.resolve.outputs.id != ''
+        env:
+          ID: ${{ steps.resolve.outputs.id }}
+          TYPE: ${{ steps.resolve.outputs.type }}
+          ACTOR: ${{ github.actor }}
+          PR: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          VERDICT: ${{ github.event.review.state }}
+        run: |
+          set -euo pipefail
+
+          # Doc root + slug come from project.yml so this file stays project-agnostic.
+          ROOT=$(ls -d __project__ docs 2>/dev/null | head -1 || echo "__project__")
+          SLUG=$(grep -m1 '^slug:' "$ROOT/project.yml" 2>/dev/null | sed 's/^slug:[[:space:]]*//' || echo "${GITHUB_REPOSITORY##*/}")
+
+          STAMP=$(date -u +%Y-%m-%dT%H-%M-%SZ)
+          DIR="$ROOT/tasks/events"
+          mkdir -p "$DIR"
+          cat > "$DIR/${STAMP}_${ID}_${TYPE}.json" <<JSON
+          {
+            "project": "${SLUG}",
+            "ticketId": "${ID}",
+            "type": "${TYPE}",
+            "at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "actor": { "name": "${ACTOR}", "kind": "human" },
+            "payload": { "pr": "${PR:-}", "sha": "${SHA:-}", "verdict": "${VERDICT:-}" },
+            "source": { "kind": "github-actions", "ref": "${{ github.event_name }}" }
+          }
+          JSON
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$DIR"
+          # [skip ci] — an event append must never trigger the quality gate; it changes no code.
+          git commit -m "chore(events): ${ID} ${TYPE} [skip ci]"
+          # Retry once: another merge may have landed between checkout and push.
+          git push || (git pull --rebase && git push)
