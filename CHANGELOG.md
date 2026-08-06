@@ -6,6 +6,13 @@ up with. Behavioural changes belong here — file changes the tool detects on it
 Newest first. One `## <version>` heading per release; the lines under it are what a consumer needs
 to decide whether to act.
 
+## 3.0.1
+
+- **Fix:** the seeded `runbook.md` stub had its frontmatter after an HTML comment, so it was never
+  at byte 0 — `check` reported `no frontmatter` and the stub could not satisfy the gate it ships
+  with. Found while adopting the package into a real repo. A test now asserts the property for every
+  seeded doc, scoped to the doc root (CLAUDE.md is a rule file the gate never scans).
+
 ## 3.0.0
 
 - **`check`** — doc metadata gate: frontmatter contract (`id` · `kind` · `title` · `description`) and
