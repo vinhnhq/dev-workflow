@@ -6,7 +6,7 @@ up with. Behavioural changes belong here — file changes the tool detects on it
 Newest first. One `## <version>` heading per release; the lines under it are what a consumer needs
 to decide whether to act.
 
-## 3.0.0-beta.0
+## 3.0.0
 
 - **`check`** — doc metadata gate: frontmatter contract (`id` · `kind` · `title` · `description`) and
   the backlog task grammar, with errors that say what to add and why. Reports and exits 0; `--strict`
