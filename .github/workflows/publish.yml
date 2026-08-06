@@ -42,5 +42,17 @@ jobs:
       # is configured for vinhnhq/dev-workflow + this workflow filename —
       # renaming this file breaks the trust.
       # --provenance is omitted: it is automatic under trusted publishing.
+      # The dist-tag is DERIVED, not defaulted. `npm publish` tags whatever it
+      # uploads as `latest` regardless of the version string, so a prerelease
+      # would silently become the default install for every
+      # `bunx @vinhnnn/dev-workflow` user. 3.0.0-beta.0 → beta, 4.0.0-rc.2 → rc,
+      # 3.0.0 → latest.
       - name: Publish
-        run: npm publish --access public
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          case "$VERSION" in
+            *-*) PRE="${VERSION#*-}"; TAG="${PRE%%.*}" ;;
+            *)   TAG="latest" ;;
+          esac
+          echo "publishing $VERSION with dist-tag: $TAG"
+          npm publish --access public --tag "$TAG"
