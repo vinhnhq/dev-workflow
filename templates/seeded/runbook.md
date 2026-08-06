@@ -1,3 +1,12 @@
+---
+id: <prefix>-doc-runbook
+kind: doc
+title: Runbook — deploy, migrate, roll back
+description: How this project reaches production and how to undo it, written for someone who has never done it.
+status: active
+updated: YYYY-MM-DD
+---
+
 <!--
 Managed by @vinhnnn/dev-workflow — `dev-workflow sync`. Copy to
 .claude/templates/local/runbook.md to own it.
@@ -13,17 +22,6 @@ Fill it in even where the answer is embarrassing ("nobody has tested rollback").
 A runbook that admits a gap is useful; one that implies a procedure exists when
 it does not is worse than none.
 -->
-
----
-
-id: <prefix>-doc-runbook
-kind: doc
-title: Runbook — deploy, migrate, roll back
-description: How this project reaches production and how to undo it, written for someone who has never done it.
-status: active
-updated: YYYY-MM-DD
-
----
 
 # Runbook
 
