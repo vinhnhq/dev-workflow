@@ -1,6 +1,6 @@
 {
   "name": "@vinhnnn/dev-workflow",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Conventions seed + managed doc/task templates + the metadata gate (dev-workflow check). Claude reads the seed, scaffolds the project, and CI keeps the metadata honest.",
   "keywords": [
     "cli",
