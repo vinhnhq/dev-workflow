@@ -1,47 +1,52 @@
 {
   "name": "@vinhnnn/dev-workflow",
-  "version": "2.4.1",
-  "description": "Drops dev-workflow.md (conventions) + a dev-workflow-pipeline/ staging folder into your project. Claude Code reads them, asks the project-specific questions, and scaffolds from there.",
-  "type": "module",
+  "version": "3.0.0-beta.0",
+  "description": "Conventions seed + managed doc/task templates + the metadata gate (dev-workflow check). Claude reads the seed, scaffolds the project, and CI keeps the metadata honest.",
+  "keywords": [
+    "cli",
+    "release",
+    "scaffolder",
+    "sprint",
+    "workflow"
+  ],
+  "homepage": "https://github.com/vinhnhq/dev-workflow#readme",
+  "bugs": {
+    "url": "https://github.com/vinhnhq/dev-workflow/issues"
+  },
+  "license": "MIT",
+  "author": "vinhnnn",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vinhnhq/dev-workflow.git"
+  },
   "bin": {
     "dev-workflow": "./bin.mjs"
   },
   "files": [
     "bin.mjs",
+    "lib",
     "templates",
     "README.md",
     "LICENSE"
   ],
-  "scripts": {
-    "lint": "tsc --noEmit",
-    "pretest": "npm run lint",
-    "test": "node --test tests/*.test.mjs"
-  },
-  "keywords": [
-    "workflow",
-    "scaffolder",
-    "sprint",
-    "release",
-    "cli"
-  ],
-  "author": "vinhnnn",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/vinhnhq/dev-workflow.git"
-  },
-  "bugs": {
-    "url": "https://github.com/vinhnhq/dev-workflow/issues"
-  },
-  "homepage": "https://github.com/vinhnhq/dev-workflow#readme",
-  "engines": {
-    "node": ">=24"
-  },
+  "type": "module",
   "publishConfig": {
     "access": "public"
   },
+  "scripts": {
+    "lint": "oxlint && tsc --noEmit && oxfmt --check .",
+    "pretest": "npm run lint",
+    "test": "node --test tests/*.test.mjs",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check ."
+  },
   "devDependencies": {
     "@types/node": "^26.1.2",
+    "oxfmt": "^0.61.0",
+    "oxlint": "^1.77.0",
     "typescript": "^7.0.2"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }

@@ -1,0 +1,39 @@
+{
+  "$comment": [
+    "Managed by @vinhnnn/dev-workflow — `dev-workflow sync`.",
+    "Copy to .claude/templates/local/ticket-event.json to own it.",
+    "",
+    "Template: one ticket-lifecycle event. Append-only — events are NEVER edited or deleted.",
+    "",
+    "Filename: <docRoot>/tasks/events/<ISO8601>_<ticketId>_<type>.json",
+    "  e.g.    2026-07-31T09-02-11Z_AB.1.2_claimed.json",
+    "",
+    "One file per event, deliberately: two files with different names can never conflict in git,",
+    "so five people and three agents all push freely with zero merge resolution. A single shared",
+    "JSONL would conflict on its last line. Directories are cheap; conflicts are not.",
+    "",
+    "Emitted by CI from signals that already exist (branch pushed, PR opened, review submitted, PR",
+    "merged) — never by a human pressing a button. Data that is a byproduct of the work is",
+    "accurate; data that is a report about the work drifts.",
+    "",
+    "The backlog and the done archive become GENERATED views over ticket content + these events.",
+    "Nobody hand-edits them, which removes both the merge-conflict class and convention decay.",
+    "",
+    "Stream id is <project>/<ticketId>, which is why ticket ids stay short and unprefixed: the",
+    "project is the partition, not a string prefix on every id.",
+    "",
+    "type: drafted | content-synced | admitted | claimed | released | pr-opened | reviewed",
+    "    | rejected | shipped | blocked | unblocked"
+  ],
+
+  "project": "<slug from project.yml>",
+  "ticketId": "AB.1.2",
+  "type": "claimed",
+  "at": "2026-01-31T09:02:11Z",
+  "actor": { "name": "someone", "kind": "human" },
+  "payload": {
+    "leaseUntil": "2026-01-31T09:47:11Z",
+    "branch": "wip/AB.1.2"
+  },
+  "source": { "kind": "github-webhook", "ref": "push:refs/heads/wip/AB.1.2" }
+}

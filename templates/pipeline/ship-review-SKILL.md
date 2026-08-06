@@ -29,11 +29,11 @@ saying so in the PR body.
 
 `git diff main...HEAD --stat`, then classify — the tier decides depth:
 
-| Tier | Touches | Ritual |
-|---|---|---|
-| **Low** | docs, config, dep bumps, copy | Gates + a read-through; ship. |
-| **Medium** | feature/UI code | Full ritual (steps 3–4). |
-| **High** | [money, auth, data schemas + migrations, security headers — list this project's crown jewels] | Full ritual **+ an explicit "needs your eyes on X" section in the PR body** — the one place the human SHOULD be interrupted pre-merge. |
+| Tier       | Touches                                                                                       | Ritual                                                                                                                                 |
+| ---------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Low**    | docs, config, dep bumps, copy                                                                 | Gates + a read-through; ship.                                                                                                          |
+| **Medium** | feature/UI code                                                                               | Full ritual (steps 3–4).                                                                                                               |
+| **High**   | [money, auth, data schemas + migrations, security headers — list this project's crown jewels] | Full ritual **+ an explicit "needs your eyes on X" section in the PR body** — the one place the human SHOULD be interrupted pre-merge. |
 
 ## 3. Adversarial self-review (medium+)
 

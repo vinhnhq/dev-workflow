@@ -88,7 +88,9 @@ if (existsSync(donePath)) {
   if (lastRow) {
     const cells = lastRow.split("|").map((c) => c.trim());
     // | ended | author | session | duration | models | tokens | cost |
-    console.log(`${bold("session")}  ${cells[2]} · ${cells[4]} · ${cells[5]} · ${green(cells[7] ?? "")}`);
+    console.log(
+      `${bold("session")}  ${cells[2]} · ${cells[4]} · ${cells[5]} · ${green(cells[7] ?? "")}`,
+    );
   }
 }
 
