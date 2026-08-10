@@ -22,8 +22,12 @@
     "Stream id is <project>/<ticketId>, which is why ticket ids stay short and unprefixed: the",
     "project is the partition, not a string prefix on every id.",
     "",
-    "type: drafted | content-synced | admitted | claimed | released | pr-opened | reviewed",
-    "    | rejected | shipped | blocked | unblocked"
+    "type: drafted | content-synced | admitted | claimed | released | pr-opened | pr-closed",
+    "    | reviewed | rejected | shipped | blocked | unblocked",
+    "",
+    "released = a CLAIM given back (claimed → ready), not a production release — CI types a PR",
+    "closed without merge as pr-closed, the observed fact; whether that releases the claim is the",
+    "consumer's interpretation."
   ],
 
   "project": "<slug from project.yml>",

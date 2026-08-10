@@ -59,7 +59,11 @@ jobs:
               ID=$(printf '%s' "$PR_TITLE" | grep -oE '^\[[A-Za-z0-9_.]+\]' | tr -d '[]' || true)
               if [ "${{ github.event.action }}" = "opened" ]; then TYPE="pr-opened"
               elif [ "${{ github.event.pull_request.merged }}" = "true" ]; then TYPE="shipped"
-              else TYPE="released"; fi ;;
+              # Closed WITHOUT merge is the observed fact "pr-closed" — nothing more. It was
+              # previously typed "released", which collides with the claim-release sense in
+              # ticket-event.json AND reads as a terminal success to any consumer whose
+              # lifecycle distinguishes merged from released (groundwork ADR-0011).
+              else TYPE="pr-closed"; fi ;;
             pull_request_review)
               ID=$(printf '%s' "$PR_TITLE" | grep -oE '^\[[A-Za-z0-9_.]+\]' | tr -d '[]' || true)
               TYPE="reviewed" ;;
