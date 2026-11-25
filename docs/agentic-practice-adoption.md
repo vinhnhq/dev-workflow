@@ -54,7 +54,7 @@ Shipped or drafted before this document existed, so a future session starts from
 | **PreToolUse guards** — documented rules become blocked actions                    | `lib/guards.mjs` + `lib/guard.mjs` → `dev-workflow guard` |
 | Harness config (env manifest + guard rules), JSON for exactness                    | `.claude/harness.json` — `lib/harness-config.mjs`         |
 | Runbook template (deploy · migrate · roll back · who-can-do-what)                  | `templates/managed/claude-templates/runbook.md`           |
-| Formatter across the package + payload templates                                   | `.oxfmtrc.json`; `lint` runs `oxfmt --check`              |
+| Formatter across the package + payload templates                                   | `biome.json`; `lint` runs `biome ci .` (Markdown not formatted) |
 
 **Where tickets now live.** As of 2026-08-05 tickets are owned by Groundwork's database, not
 `backlog.md` (groundwork ADR-0010/0011/0012). Consequences for this package: the backlog **grammar

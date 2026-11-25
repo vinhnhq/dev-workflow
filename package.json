@@ -34,16 +34,15 @@
     "access": "public"
   },
   "scripts": {
-    "lint": "oxlint && tsc --noEmit && oxfmt --check .",
+    "lint": "biome ci . && tsc --noEmit",
     "pretest": "npm run lint",
     "test": "node --test tests/*.test.mjs",
-    "format": "oxfmt .",
-    "format:check": "oxfmt --check ."
+    "format": "biome check --write .",
+    "format:check": "biome ci ."
   },
   "devDependencies": {
+    "@biomejs/biome": "2.6.9",
     "@types/node": "^26.1.2",
-    "oxfmt": "^0.61.0",
-    "oxlint": "^1.77.0",
     "typescript": "^7.0.2"
   },
   "engines": {
