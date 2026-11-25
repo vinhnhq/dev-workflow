@@ -163,3 +163,28 @@ resumable, which is the thing that hurts today when a long session compacts.
 A loop's termination condition is its gates. If `lint` or the test suite is broken, every Oracle that
 says "gates green" is unverifiable and the loop cannot know it is done. **Fix the gates first** — a
 loop over a broken gate is a machine for generating confident, unverified work.
+
+## 11. A first version, built in a session (k-studio, 2026-11-25)
+
+A smaller loop than the one above was built first, and it is worth recording because it needed none
+of §3–§5:
+
+- **The queue is the issue tracker, not the backlog.** The backlog stays the record; an issue exists
+  only for a ticket deliberately handed to the loop, titled with the ticket's id and labelled
+  `agent-ready`. `needs-owner` is the other label, and an agent never starts one.
+- **A scheduled, read-only look at production** (a CI workflow, no agent, no tokens): the sign-in
+  page answers with its form, and the commit deployed to production is the head of `main`. A failure
+  opens one issue, or comments on the one already open.
+- **`/daily`** reads production, CI, the pull requests and the queue, then takes the first that
+  applies and only one: report a production failure · stop if a pull request of its own is waiting ·
+  fix an open pull request's failing checks · work the oldest `agent-ready` issue · say there is
+  nothing. It does not invent work.
+- **`/work-issue <n>`** is the session contract: one issue, one branch, one pull request, then stop.
+  Its admission list is §6's tier ceiling written as areas (money, payroll, permissions, migrations,
+  production data are never started). Its bounds: five tries at the gates, stop when the third try
+  fails the way the second did, and stop when a gate would have to be weakened to pass.
+- **The exit is the pull request.** No exit code and no handoff file: the WIP cap of §7 is "one open
+  pull request of mine", which is also what makes a restart idempotent.
+
+What it does not have: a fresh process per iteration (§1), so it is right for one ticket a day and
+wrong for working a backlog. It had not yet run on a real ticket when this was written.

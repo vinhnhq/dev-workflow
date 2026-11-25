@@ -21,7 +21,10 @@ bun run test:coverage   # the REAL gate — thresholds included
 bun run build
 ```
 
-E2E only when user-visible behavior changed. **Never weaken a gate to pass
+If the project has grown a single `verify` command, run that instead — it is
+the same gates plus the project's own, and it names what it skipped. A suite
+that reseeds its database runs on a scratch database, never the one a person
+tests on. E2E only when user-visible behavior changed. **Never weaken a gate to pass
 it** — no threshold lowering, no rule disabling, no test deletion without
 saying so in the PR body.
 
@@ -46,6 +49,10 @@ Read the full diff as a hostile reviewer, in this order:
    reads].
 3. **Scope check** — does the diff do only what the ticket asked?
 
+4. **What the format did** — the formatter runs once, here, after the gates;
+   anything it rewrote that this change did not write is a finding. Run the
+   gates again after it.
+
 Fix what's real; list what's deferred. Findings go in the PR body either way.
 
 ## 4. PR body contract
@@ -53,7 +60,7 @@ Fix what's real; list what's deferred. Findings go in the PR body either way.
 Every PR opened after this ritual includes: **Intent** (one paragraph) ·
 **Risk tier** and why · **Self-review findings** (fixed vs deferred; deferred
 gets a backlog line) · **Real test output** (paste the runner's summary line,
-never "tests pass") · **Gate changes** (any CI/lint/coverage config touched,
+never "tests pass") · **What was NOT run** (every skipped gate, by name) · **Gate changes** (any CI/lint/coverage config touched,
 called out loudly).
 
 ## 5. CI to green
