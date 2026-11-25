@@ -25,6 +25,7 @@ When the user says **"set up the project"**, **"init"**, or similar (or asks Cla
    - `work-summary.ts` → `.claude/scripts/work-summary.ts` (+ a `summary` script in the package manifest)
    - `claude-settings.json` → merge into `.claude/settings.json` (project-scoped SessionEnd hook)
    - `ci.yml` → `.github/workflows/ci.yml` (adjust gates/secrets to the project)
+   - `maker-AGENT.md` → `.claude/agents/maker.md` (the builder on a smaller model — see [Who plans and who builds](#who-plans-and-who-builds))
 
    Then **delete `dev-workflow-pipeline/`** — it's a delivery mechanism, not a permanent folder. If it isn't present (`--no-pipeline`, or a seed copied by hand), skip this step and build the pipeline as the project needs it.
 
@@ -237,6 +238,9 @@ If none of those apply, three files is enough. Resist the urge to pre-build stru
 - **Tests** — co-located in `__tests__/` next to source.
 - **Commits** — Conventional Commits, atomic, one semantic type per commit (`feat:`, `fix:`, `docs:`, `test:`, `chore:`). Small, never amend.
 - **Branch model** — `main` is trunk. Feature branches → PR → squash-merge to `main`. Large features ship as a **stack** of small PRs (git-spice restacks + retargets after each squash-merge; never delete a mid-stack branch — GitHub auto-closes its dependent PR unrecoverably).
+- **A `dev` branch, once production holds real data** — `feat/*` → `dev` → `main`. `dev` is a public demo with invented data only, and every service has its own "dev" (the preview deployment, a database branch, a bucket), so nothing a person tests ever touches production. Squash into `dev`; release `dev` → `main` with a merge commit; a migration runs against production **before** that merge. Until production holds something real, `main` as trunk is enough.
+- **Formatting is a step, not a habit** — run the formatter once, when the work is done and its gates are green, before the commit; then run the gates again. A formatter between edits moves the lines an agent is about to edit and turns a three-line diff into thirty; a format at the end has moved a suppression off the line it covered and broken a test that matches source text. A formatting-only commit goes in `.git-blame-ignore-revs`. **A tool's "safe fix" or "equivalent" rewrite is a claim**: accept it only when the real output — the compiled CSS, the rendered document, the syntax tree — is the same before and after. Prose documents are linted for what renders wrongly, not reformatted, unless the formatter has passed that test on this repo.
+- **A clean tree ends every piece of work** — a helper script written to try something is committed with its manifest entry and its line in the command list, or deleted. `git status` is clean, or every line of it is named in the report.
 - **Long autonomous runs** — commit at every green checkpoint (gates pass → commit). Agent context compaction is lossy; artifacts are not. A fresh session restores from `git log` + backlog + memory, never from conversational recall.
 
 ---
@@ -278,6 +282,10 @@ These are **defaults**, not laws — override per-project if a feature requires 
 - One Playwright smoke test per shipped mode.
 - Lighthouse on the main screen: Performance ≥ 90, Accessibility ≥ 95.
 - **The four gates** — this line is their sole owner; everything else points here. Green before any task moves to `done`: `bun run lint` · `bunx tsc --noEmit` · `bun run test:coverage` · `bun run build`. (Note `bun run test`, never bare `bun test` — see the [Test layering](#test-layering) footgun.) **Never weaken a gate to pass it**: no threshold lowering, no rule disabling, no test deletion without saying so in the PR body.
+- **One command runs every gate, and says what it skipped.** As gates accrue past the four, give the project a single `verify` script: each gate in order, a pass / FAIL / skipped table at the end, and the sentence "what ran passed, and this is NOT a full verification — skipped: …" when anything was left out. CI runs the same steps under the same names, so a red check maps onto a command.
+- **A gate that reseeds is never in that command.** A suite that wipes or reseeds its database (integration, E2E) runs against a scratch database from its own worktree — never the database a person tests on. It destroyed an afternoon's hand-made test data more than once before this was a rule.
+- **A trap one grep can prove is a rule in a script, not a sentence in a document.** Each rule names the document that explains it and carries a sample that breaks it; a `--prove` mode applies every sample and fails any rule that still passes. A rule that cannot fail is not a rule. Traps a grep cannot prove stay prose: a one-line title in the rule file, the write-up in one `landmines.md` grouped by area.
+- **A check that reads source reads the code, not the text.** Strip comments by the syntax tree before matching. Four gates once passed only because a comment contained the name they were looking for.
 - **CI runs the same gates on every PR** (GitHub Actions): pin the toolchain from `mise.toml` (`mise-action`), degrade gracefully when secrets are absent (unit-only + a warning, with a syntactically-valid placeholder for env vars validated at import), keep actions on current majors (node24 runtimes), cache the package store + framework build cache. Local gates run against the **working tree**; CI runs against the **commit** — a deliberately-unstaged file passes locally and fails CI.
 
 ---
@@ -300,6 +308,16 @@ Translate the spec into TDD-ordered tasks in `__project__/backlog.md`. Each task
 
 Implement one task at a time, vertical slices. Failing test first, then implementation, then refactor if needed. Don't batch multiple tasks into one commit.
 
+#### Who plans and who builds
+
+On agent-assisted projects the largest model is for the part that needs it: understanding the request, the trade-offs, the spec or ADR, the tasks, and checking the result. Writing the code of a task that is already planned is done by a smaller one.
+
+- **Plan first, in writing** — a spec, an ADR, or a backlog task that states what done is and which gate shows it. A task that cannot be written down that way is not ready to hand over.
+- **Hand it to a `maker` agent pinned to a smaller model**, one task at a time, with a brief that stands on its own: the goal and why, the files and documents to read, what is out of scope, the branch, the gates, and what the report must contain. The maker knows nothing the brief does not say — if you cannot write the brief, you do not understand the task well enough to delegate it.
+- **Check the diff and the gates, not the report.** Re-run the proof yourself. A number goes into a document after the command that produces it, never from a report or from memory.
+- **One maker at a time.** Two agents in one checkout overwrite each other; a brief also says what is forbidden (stashing, resetting, the scratch files of the checker), not only what is wanted.
+- **Never handed over:** the high tier of the ship ritual (money, auth, schemas and migrations, production data), a merge, a release — those are done with the human in the conversation. Nor a change of a few lines, where the brief costs more than the edit.
+
 ### 4. Test
 
 Before a task moves to `done.md`, **the four gates** ([Quality bar](#quality-bar), the sole owner of that list) must pass. Every task, not just the last one before a PR.
@@ -312,7 +330,7 @@ Two properties matter more than the steps, and are why the ritual is a skill rat
 
 ### 6. Release
 
-PR-based, never auto-merge. **The merge is a deliberate human click** — an agent can't be paged and can't be held responsible. Mechanics (squash, stacks, restacking) are owned by [Conventions → Branch model](#conventions); tagging on `main` triggers any publish workflow you have wired up.
+PR-based, never auto-merge. **The merge is a deliberate human click** — an agent can't be paged and can't be held responsible. When an agent does hold the merge button, it merges or writes to production only on an explicit ask in that turn; an earlier or general go-ahead does not carry over. After a release, look at production and **write down what was not checked** ("nobody has signed in since the deploy" is a result). Read a production error's deployment id before blaming the release for it — the list usually still shows the previous deployment's errors. Mechanics (squash, stacks, restacking) are owned by [Conventions → Branch model](#conventions); tagging on `main` triggers any publish workflow you have wired up.
 
 ---
 
@@ -320,15 +338,17 @@ PR-based, never auto-merge. **The merge is a deliberate human click** — an age
 
 Every kind of knowledge has exactly ONE owning file; everything else points. Duplicated status is the #1 docs disease in long-running agent projects: the same ship-story ends up in 4–5 files and the copies start disagreeing.
 
-| Knowledge                          | Sole owner                                                                       |
-| ---------------------------------- | -------------------------------------------------------------------------------- |
-| Ship facts (PR/SHA/gates/features) | `done.md` — one dated entry per PR, ≤ ~10 lines                                  |
-| Open work                          | `backlog.md` — open items ONLY; shipping = **move** to done, never keep-and-tick |
-| Lessons                            | `retro.md` — lessons only; no ship-narrative recap                               |
-| Current state                      | ONE dated block in the orientation doc — never a growing status trail            |
-| Decision status                    | each ADR's own `Status:` line + one index file                                   |
-| Stack                              | the package manifest                                                             |
-| Specs                              | frozen at intent — **never** add "as-built" sections post-ship                   |
+| Knowledge                          | Sole owner                                                                                                                                     |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ship facts (PR/SHA/gates/features) | `done.md` — one dated entry per PR, ≤ ~10 lines                                                                                                |
+| Open work                          | `backlog.md` — open items ONLY; shipping = **move** to done, never keep-and-tick                                                               |
+| Lessons                            | `retro.md` — lessons only; no ship-narrative recap                                                                                             |
+| Current state                      | ONE dated block in the orientation doc — never a growing status trail                                                                          |
+| Decision status                    | each ADR's own `Status:` line + one index file                                                                                                 |
+| Stack                              | the package manifest                                                                                                                           |
+| Specs                              | frozen at intent — **never** add "as-built" sections post-ship                                                                                 |
+| Traps already sprung               | `landmines.md` by area — the rule file keeps only their one-line titles                                                                        |
+| Why a line of code is as it is     | ONE home. A comment beside the line, or — if the project bans comments — an ADR, a landmine or a per-area code note. Never both: the two drift |
 
 Moving a task: cut the line from `backlog.md`, paste at the **top** of `done.md` with date + SHA (`- 2026-05-08 · \`abc1234\` · 1.2 findPath: …`). Newest at top; partition once `done.md` exceeds ~300 lines.
 
